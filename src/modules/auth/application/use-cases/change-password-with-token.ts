@@ -41,7 +41,8 @@ export class ChangePasswordWithTokenUseCase {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({ message: 'User not found' });
+      
     }
 
     const isSamePassword = await bcrypt.compare(newPassword, user.password);

@@ -8,7 +8,7 @@ export class UpdateProfileUseCase {
 
   async execute(userId: number, dto: UpdateProfileDto) {
     const exists = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!exists) throw new NotFoundException('User not found');
+    if (!exists) throw new NotFoundException({ message: 'User not found' });
 
     await this.prisma.user.update({
       where: { id: userId },

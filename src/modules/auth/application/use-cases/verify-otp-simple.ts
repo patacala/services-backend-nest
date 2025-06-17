@@ -26,7 +26,7 @@ export class VerifyOtpSimpleUseCase {
       where: { phonenumber },
     });
 
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new NotFoundException({ message: 'User not found' });
 
     // Busca OTP válido asociado al userId y número
     const otp = await this.prisma.otpcode.findFirst({

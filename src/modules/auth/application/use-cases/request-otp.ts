@@ -11,7 +11,7 @@ export class RequestOtpUseCase {
 
   async execute(userId: number, phonenumber: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new NotFoundException({ message: 'User not found' });
 
     const code = Math.floor(1000 + Math.random() * 9000).toString();
 

@@ -43,7 +43,7 @@ export class VerifyOtpInitialUseCase {
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new NotFoundException({ message: 'User not found' });
 
     await this.prisma.user.update({
       where: { id: userId },

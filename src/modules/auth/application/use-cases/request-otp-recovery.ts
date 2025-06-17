@@ -15,7 +15,8 @@ export class RequestOtpRecoveryUseCase {
     });
 
     if (!user) {
-      throw new NotFoundException('No existe un usuario con ese número');
+      throw new NotFoundException({ message: 'There is no user with that number' });
+      
     }
 
     const code = Math.floor(1000 + Math.random() * 9000).toString();
