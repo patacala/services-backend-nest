@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  password    String
+  phonenumber String?  @unique
+  city        String?
+  createdat   DateTime @default(now())
+
+  userservicetags userservicetag[]
+  otpcodes        otpcode[]
+}
+
+model servicetag {
+  id        Int      @id @default(autoincrement())
+  name      String
+  icon      String
+  createdat DateTime @default(now())
+
+  userservicetags userservicetag[]
+}
+
+model userservicetag {
+  id           Int @id @default(autoincrement())
+  userid       Int
+  servicetagid Int
+
+  user       user       @relation(fields: [userid], references: [id], onDelete: Cascade)
+  servicetag servicetag @relation(fields: [servicetagid], references: [id], onDelete: Cascade)
+}
+
+model otpcode {
+  id          Int      @id @default(autoincrement())
+  userid      Int
+  phonenumber String
+  code        String
+  used        Boolean  @default(false)
+  expiresat   DateTime
+  createdat   DateTime @default(now())
+
+  user user @relation(fields: [userid], references: [id], onDelete: Cascade)
+}

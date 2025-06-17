@@ -1,0 +1,19 @@
+# Ignorar la carpeta de módulos de Node.js, que contiene las dependencias del proyecto.
+# Esta carpeta suele ser muy grande y no debe subirse al control de versiones.
+node_modules/
+
+# Archivos de configuración y logs comunes que no deben estar en el repositorio.
+.DS_Store          # Archivo de metadatos de macOS
+npm-debug.log* # Logs de depuración de npm
+yarn-debug.log* # Logs de depuración de Yarn
+yarn-error.log* # Logs de error de Yarn
+
+# Directorios de build o compilación, si los hubiera.
+/dist/
+/build/
+/out/
+
+# Archivos de entorno y configuraciones sensibles (ej. claves API).
+# Si tienes un archivo .env, es crucial ignorarlo.
+.env
+.env.*
