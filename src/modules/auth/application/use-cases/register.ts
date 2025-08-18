@@ -10,7 +10,7 @@ export class RegisterUserUseCase {
     private readonly jwtService: JwtService,
   ) {}
 
-  async execute(data: { name: string; email: string; password: string }): Promise<{ user: User; token: string }> {
+  async execute(data: { name: string; email: string; }): Promise<{ user: User; token: string }> {
     const existing = await this.userRepo.findByEmail(data.email);
     if (existing) {
       throw new ConflictException('Email already in use');

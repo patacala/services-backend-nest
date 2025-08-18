@@ -10,7 +10,6 @@ import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.
 import { JwtStrategy } from './infrastructure/guards/jwt.strategy';
 import { SharedModule } from '@/shared/shared.module';
 import { LoginUseCase } from './application/use-cases/login';
-import { ChangePasswordWithTokenUseCase } from './application/use-cases/change-password-with-token';
 import { RequestOtpRecoveryUseCase } from './application/use-cases/request-otp-recovery';
 
 @Module({
@@ -33,7 +32,6 @@ import { RequestOtpRecoveryUseCase } from './application/use-cases/request-otp-r
     VerifyOtpInitialUseCase,
     VerifyOtpSimpleUseCase,  
     RegisterUserUseCase,
-    ChangePasswordWithTokenUseCase,
     LoginUseCase,
     JwtStrategy,
   ],
