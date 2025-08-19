@@ -21,7 +21,7 @@ export class RegisterUserUseCase {
     const token = this.jwtService.sign({
       sub: user.id,
       email: user.email,
-      name: user.name,
+      name: user.displayName,
     });
 
     return { user, token };

@@ -1,7 +1,11 @@
 export class User {
   constructor(
-    public readonly id: number,
-    public name: string,
-    public email: string,
+    public readonly id: string,
+    public readonly firebaseUid: string,
+    public readonly email: string,
+    public readonly displayName: string,
+    public readonly role: string,
+    public readonly createdAt?: Date,
+    public readonly updatedAt?: Date,
   ) {}
 }

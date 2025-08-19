@@ -2,15 +2,11 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './infrastructure/controllers/auth.controller';
-import { RequestOtpUseCase } from './application/use-cases/request-otp';
-import { VerifyOtpInitialUseCase } from './application/use-cases/verify-otp-initial';
-import { VerifyOtpSimpleUseCase } from './application/use-cases/verify-otp-simple';
 import { RegisterUserUseCase } from './application/use-cases/register';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { JwtStrategy } from './infrastructure/guards/jwt.strategy';
 import { SharedModule } from '@/shared/shared.module';
 import { LoginUseCase } from './application/use-cases/login';
-import { RequestOtpRecoveryUseCase } from './application/use-cases/request-otp-recovery';
 
 @Module({
   imports: [
@@ -27,10 +23,6 @@ import { RequestOtpRecoveryUseCase } from './application/use-cases/request-otp-r
   controllers: [AuthController],
   providers: [
     PrismaUserRepository,
-    RequestOtpUseCase,
-    RequestOtpRecoveryUseCase,
-    VerifyOtpInitialUseCase,
-    VerifyOtpSimpleUseCase,  
     RegisterUserUseCase,
     LoginUseCase,
     JwtStrategy,
