@@ -17,4 +17,3 @@ yarn-error.log* # Logs de error de Yarn
 # Si tienes un archivo .env, es crucial ignorarlo.
 .env
 .env.*
-firebase-service-account.json
