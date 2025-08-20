@@ -17,7 +17,7 @@ export class LoginUseCase {
       console.log(decoded);
       let isNewUser = true;
 
-      // Buscar usuario por firebase_uid o email
+      // Buscar usuario por firebase_uid o email o phone
       let user = await this.prisma.user.findFirst({
         where: {
           OR: [
