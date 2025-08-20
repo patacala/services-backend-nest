@@ -18,7 +18,7 @@ export class AuthController {
   } */
 
   @UseGuards(FirebaseAuthGuard)
-  @Post('firebase-login')
+  @Post('login')
   async firebaseLogin(@Body() dto: FirebaseLoginDto) {
     return this.loginUC.loginWithFirebase(dto.firebaseToken);
   }
