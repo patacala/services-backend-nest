@@ -62,12 +62,13 @@ enum UploadTarget {
 
 model User {
   id           String    @id @default(uuid()) @db.Uuid
-  firebase_uid String    @unique
-  email        String    @unique
-  display_name String
+  firebaseUid  String    @unique
+  email        String?   @unique   // opcional: algunos usuarios solo celular
+  phone        String?   @unique   // opcional: algunos usuarios solo email
+  displayName  String
   role         String    @default("seeker")
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now())
 
   profile        Profile?
   services       Service[]
@@ -84,6 +85,7 @@ model User {
   conversationsCreated Conversation[] @relation("UserConversations")
   messageReceipts MessageReceipt[] @relation("UserReceipts")
   uploadIntents   UploadIntent[]   @relation("UserUploadsIntents")
+  categories     UserCategory[]
 }
 
 model Profile {
@@ -105,15 +107,26 @@ model Profile {
 }
 
 model Category {
-  id        BigInt     @id @default(autoincrement())
-  name      String
-  slug      String     @unique
-  parent_id BigInt?
+  id       BigInt   @id @default(autoincrement())
+  name_es String
+  name_en String
+  slug_es String @unique
+  slug_en String @unique
+  parentId BigInt?
+  parent   Category?   @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[]  @relation("CategoryToCategory")
+  services ServiceCategory[]
+  users    UserCategory[]
+}
 
-  parent    Category?  @relation("CategoryToParent", fields: [parent_id], references: [id], onDelete: SetNull)
-  children  Category[] @relation("CategoryToParent")
+model UserCategory {
+  userId     String   @db.Uuid
+  categoryId BigInt
 
-  services  ServiceCategory[]
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, categoryId])
 }
 
 model Tag {

@@ -2,7 +2,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { admin } from '@/shared/firebase/firebase-admin.module';
 
 @Injectable()
 export class LoginUseCase {
@@ -11,13 +10,12 @@ export class LoginUseCase {
     private readonly jwt: JwtService,
   ) {}
 
-  async loginWithFirebase(firebaseToken: string) {
+  async loginWithFirebase(decoded: any) {
     try {
-      // Verificar el token de Firebase
-      console.log(firebaseToken);
-      const decoded = await admin.auth().verifyIdToken(firebaseToken);
-      const { uid, email } = decoded;
-      let isNewUser = true; 
+      // Obtener información del token de Firebase
+      const { uid, email, phone_number, name } = decoded;
+      console.log(decoded);
+      let isNewUser = true;
 
       // Buscar usuario por firebase_uid o email
       let user = await this.prisma.user.findFirst({
@@ -43,9 +41,9 @@ export class LoginUseCase {
         isNewUser = false;
       }
 
-      // Crear payload del JWT
+      // Crear payload del JWT, vence en 7 dias
       const payload = { sub: user.id, role: user.role };
-      const token = this.jwt.sign(payload);
+      const token = this.jwt.sign(payload, { expiresIn: '7d' });
 
       return {
         token,

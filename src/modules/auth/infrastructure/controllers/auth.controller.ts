@@ -1,5 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { FirebaseLoginDto } from '../dtos/firebase-login.dto';
+import { Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { RegisterUserUseCase } from '../../application/use-cases/register';
 import { LoginUseCase } from '../../application/use-cases/login';
 import { FirebaseAuthGuard } from '@/shared/firebase/firebase-auth.guard';
@@ -19,7 +18,7 @@ export class AuthController {
 
   @UseGuards(FirebaseAuthGuard)
   @Post('login')
-  async firebaseLogin(@Body() dto: FirebaseLoginDto) {
-    return this.loginUC.loginWithFirebase(dto.firebaseToken);
+  async firebaseLogin(@Req() req) {
+    return this.loginUC.loginWithFirebase(req.user);
   }
 }
