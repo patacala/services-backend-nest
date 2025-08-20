@@ -112,8 +112,8 @@ model Category {
   name_en String
   slug_es String @unique
   slug_en String @unique
-  parentId BigInt?
-  parent   Category?   @relation("CategoryToCategory", fields: [parentId], references: [id])
+  parent_id BigInt?
+  parent   Category?   @relation("CategoryToCategory", fields: [parent_id], references: [id])
   children Category[]  @relation("CategoryToCategory")
   services ServiceCategory[]
   users    UserCategory[]

@@ -21,8 +21,9 @@ export class LoginUseCase {
       let user = await this.prisma.user.findFirst({
         where: {
           OR: [
-            { firebase_uid: uid },
+            { firebaseUid: uid },
             { email: email ?? undefined },
+            { phone: phone_number ?? undefined },
           ],
         },
       });
@@ -31,9 +32,10 @@ export class LoginUseCase {
       if (!user) {
         user = await this.prisma.user.create({
           data: {
-            firebase_uid: uid,
-            email: email ?? `user_${uid}@firebase.local`,
-            display_name: email ?? 'Firebase User',
+            firebaseUid: uid,
+            email: email ?? null,
+            phone: email ?? null,
+            displayName: email ?? null,
             role: 'seeker',
           },
         });
@@ -49,8 +51,9 @@ export class LoginUseCase {
         token,
         user: {
           id: user.id,
-          displayName: user.display_name,
+          displayName: user.displayName,
           email: user.email,
+          phone: user.phone,
           role: user.role,
           isNewUser
         },
