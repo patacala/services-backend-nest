@@ -65,7 +65,7 @@ model User {
   firebaseUid  String    @unique
   email        String?   @unique   // opcional: algunos usuarios solo celular
   phone        String?   @unique   // opcional: algunos usuarios solo email
-  displayName  String
+  displayName  String?
   role         String    @default("seeker")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @default(now())
