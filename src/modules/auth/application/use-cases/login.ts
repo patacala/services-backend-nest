@@ -15,6 +15,7 @@ export class LoginUseCase {
       // Obtener información del token de Firebase
       const { uid, email, phone_number, name } = decoded;
       console.log(decoded);
+
       let isNewUser = true;
 
       // Buscar usuario por firebase_uid o email o phone
@@ -34,8 +35,8 @@ export class LoginUseCase {
           data: {
             firebaseUid: uid,
             email: email ?? null,
-            phone: email ?? null,
-            displayName: email ?? null,
+            phone: phone_number ?? null,
+            displayName: name ?? null,
             role: 'seeker',
           },
         });
@@ -60,7 +61,7 @@ export class LoginUseCase {
       };
     } catch (error) {
       console.error('Error en loginWithFirebase:', error);
-      throw new UnauthorizedException('Token de Firebase inválido o expirado');
+      throw new UnauthorizedException('Error al validad OTP, intentelo de nuevo.');
     }
   }
 }
