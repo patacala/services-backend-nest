@@ -1,6 +1,8 @@
-import { Controller, Get, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { GetCategoriesUseCase } from '../../application/use-cases/getCategories';
+import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('categories')
 export class CategoryController {
   constructor(
@@ -20,7 +22,7 @@ export class CategoryController {
       limit: limit ? parseInt(limit) : undefined,
       parent_id,
       search,
-      language
+      language: language || 'es'
     };
     
     return this.getCategoriesUC.execute(query);
@@ -32,12 +34,12 @@ export class CategoryController {
   }
 
   @Get('user/:userId')
-  async getUserCategories(@Param('userId') userId: string) {
-    return this.getCategoriesUC.getUserCategories(userId);
+  async getUserCategories(@Param('userId') userId: string, @Query('language') language?: 'es' | 'en') {
+    return this.getCategoriesUC.getUserCategories(userId, language);
   }
 
   @Get(':id')
-  async getCategoryById(@Param('id') id: string) {
-    return this.getCategoriesUC.getCategoryById(id);
+  async getCategoryById(@Param('id') id: string, @Query('language') language?: 'es' | 'en') {
+    return this.getCategoriesUC.getCategoryById(id, language);
   }
 }

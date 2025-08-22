@@ -92,12 +92,15 @@ model Profile {
   user_id         String    @id @db.Uuid
   user            User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  name            String?
   bio             String?
+  email           String?
   phone           String?
   location_city   String?
   location_country String?
   lat             Float?
   lon             Float?
+  address         String?
 
   avatar_media_id String?   @db.Uuid
   avatar          MediaFile? @relation("ProfileAvatar", fields: [avatar_media_id], references: [id], onDelete: SetNull)

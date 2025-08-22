@@ -20,8 +20,10 @@ export class GetCategoriesUseCase {
       limit = 50,
       parent_id,
       search,
-      language = 'es'
+      language
     } = query;
+
+    const selectedLanguage = language || 'es';
 
     const skip = (page - 1) * limit;
     const whereConditions: any = {};
@@ -33,7 +35,7 @@ export class GetCategoriesUseCase {
 
     // Filtro de búsqueda por nombre según idioma
     if (search) {
-      const searchField = language === 'es' ? 'name_es' : 'name_en';
+      const searchField = selectedLanguage === 'es' ? 'name_es' : 'name_en';
       whereConditions[searchField] = {
         contains: search,
         mode: 'insensitive'
@@ -62,7 +64,7 @@ export class GetCategoriesUseCase {
           },
           orderBy: [
             { parent_id: 'asc' },
-            language === 'es' ? { name_es: 'asc' } : { name_en: 'asc' }
+            selectedLanguage  === 'es' ? { name_es: 'asc' } : { name_en: 'asc' }
           ]
         }),
         // Contar total para paginación
@@ -74,24 +76,18 @@ export class GetCategoriesUseCase {
       // Transformar BigInt a string para serialización JSON
       const transformedCategories = categories.map(category => ({
         id: category.id.toString(),
-        name_es: category.name_es,
-        name_en: category.name_en,
-        slug_es: category.slug_es,
-        slug_en: category.slug_en,
+        name: selectedLanguage === 'es' ? category.name_es : category.name_en,
+        slug: selectedLanguage === 'es' ? category.slug_es : category.slug_en,
         parent_id: category.parent_id?.toString() || null,
         parent: category.parent ? {
           id: category.parent.id.toString(),
-          name_es: category.parent.name_es,
-          name_en: category.parent.name_en,
-          slug_es: category.parent.slug_es,
-          slug_en: category.parent.slug_en,
+          name: selectedLanguage === 'es' ? category.parent.name_es : category.parent.name_en,
+          slug: selectedLanguage === 'es' ? category.parent.slug_es : category.parent.slug_en,
         } : null,
         children: category.children.map(child => ({
           id: child.id.toString(),
-          name_es: child.name_es,
-          name_en: child.name_en,
-          slug_es: child.slug_es,
-          slug_en: child.slug_en,
+          name: selectedLanguage === 'es' ? child.name_es : child.name_en,
+          slug: selectedLanguage === 'es' ? child.slug_es : child.slug_en,
         })),
         counts: {
           children: category._count.children,
@@ -135,10 +131,8 @@ export class GetCategoriesUseCase {
 
       return categories.map(category => ({
         id: category.id.toString(),
-        name_es: category.name_es,
-        name_en: category.name_en,
-        slug_es: category.slug_es,
-        slug_en: category.slug_en,
+        name: language === 'es' ? category.name_es : category.name_en,
+        slug: language === 'es' ? category.slug_es : category.slug_en,
         counts: {
           children: category._count.children,
           users: category._count.users,
@@ -151,7 +145,7 @@ export class GetCategoriesUseCase {
   }
 
   // Método para obtener una categoría específica
-  async getCategoryById(id: string) {
+  async getCategoryById(id: string, language: 'es' | 'en' = 'es') {
     try {
       const category = await this.prisma.category.findUnique({
         where: { id: BigInt(id) },
@@ -174,20 +168,18 @@ export class GetCategoriesUseCase {
 
       return {
         id: category.id.toString(),
-        name_es: category.name_es,
-        name_en: category.name_en,
-        slug_es: category.slug_es,
-        slug_en: category.slug_en,
+        name: language === 'es' ? category.name_es : category.name_en,
+        slug: language === 'es' ? category.slug_es : category.slug_en,
         parent_id: category.parent_id?.toString() || null,
         parent: category.parent ? {
           id: category.parent.id.toString(),
-          name_es: category.parent.name_es,
-          name_en: category.parent.name_en,
+          name: language === 'es' ? category.parent.name_es : category.parent.name_en,
+          slug: language === 'es' ? category.parent.slug_es : category.parent.slug_en,
         } : null,
         children: category.children.map(child => ({
           id: child.id.toString(),
-          name_es: child.name_es,
-          name_en: child.name_en,
+          name: language === 'es' ? child.name_es : child.name_en,
+          slug: language === 'es' ? child.slug_es : child.slug_en,
         })),
         counts: {
           children: category._count.children,
@@ -202,7 +194,7 @@ export class GetCategoriesUseCase {
   }
 
   // Método para obtener categorías de un usuario específico
-  async getUserCategories(userId: string) {
+  async getUserCategories(userId: string, language: 'es' | 'en' = 'es') {
     try {
       const userCategories = await this.prisma.userCategory.findMany({
         where: { userId },
@@ -216,10 +208,8 @@ export class GetCategoriesUseCase {
         categoryId: uc.categoryId.toString(),
         category: {
           id: uc.category.id.toString(),
-          name_es: uc.category.name_es,
-          name_en: uc.category.name_en,
-          slug_es: uc.category.slug_es,
-          slug_en: uc.category.slug_en,
+          name: language === 'es' ? uc.category.name_es : uc.category.name_en,
+          slug: language === 'es' ? uc.category.slug_es : uc.category.slug_en,
         }
       }));
     } catch (error) {

@@ -14,8 +14,6 @@ export class LoginUseCase {
     try {
       // Obtener información del token de Firebase
       const { uid, email, phone_number, name } = decoded;
-      console.log(decoded);
-
       let isNewUser = true;
 
       // Buscar usuario por firebase_uid o email o phone
