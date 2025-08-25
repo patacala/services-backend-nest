@@ -18,25 +18,22 @@ export class UpdateProfileUseCase {
         throw new NotFoundException(`Perfil con ID ${userId} no encontrado.`);
       }
 
-      // Actualizar el perfil
-      const updatedProfile = await this.prisma.profile.update({
+      // Actualizar el perfil con los campos permitidos
+      await this.prisma.profile.update({
         where: { user_id: userId },
         data: {
-          ...(dto.name && { displayName: dto.name }), // Solo actualizar si el campo no es undefined
-          ...(dto.email && { email: dto.email }),
-          /* ...(dto.phone && { phone: dto.phone }), */
+          ...(dto.name && { name: dto.name }),
+          ...(dto.city && { location_city: dto.city }),
+          ...(dto.address && { address: dto.address }),
         },
       });
 
-      // Retornar el perfil actualizado (opcional)
-      return {
-        id: updatedProfile.user_id,
-        email: updatedProfile.email,
-        phone: updatedProfile.phone,
+      return { 
+        message: 'Profile updated successfully'
       };
     } catch (error) {
       console.error('Error al actualizar el perfil:', error);
-      throw error; // Manejo de errores puede ser más específico si se desea
+      throw error;
     }
   }
 }

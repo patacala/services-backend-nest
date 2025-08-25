@@ -7,7 +7,7 @@ import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.
 import { JwtStrategy } from './infrastructure/guards/jwt.strategy';
 import { SharedModule } from '@/shared/shared.module';
 import { LoginUseCase } from './application/use-cases/login';
-import { RegisterDto } from './infrastructure/dtos/register.dto';
+import { GetProfileUseCase } from './application/use-cases/profile';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile';
 
 @Module({
@@ -26,6 +26,7 @@ import { UpdateProfileUseCase } from './application/use-cases/update-profile';
   providers: [
     PrismaUserRepository,
     RegisterUserUseCase,
+    GetProfileUseCase,
     UpdateProfileUseCase,
     LoginUseCase,
     JwtStrategy,
