@@ -20,7 +20,7 @@ export class PrismaServiceRepository implements ServiceRepository {
         location_city: data.location_city ?? null,
         lat: data.lat ?? null,
         lon: data.lon ?? null,
-        cover_media_id: data.cover_media_id ?? null,
+        cover_media_id: data.cover_media_id!,
         categories: {
           create: data.categories!.map((categoryId) => ({
             category_id: BigInt(categoryId),
@@ -51,12 +51,10 @@ export class PrismaServiceRepository implements ServiceRepository {
       service.lat,
       service.lon,
       service.cover_media_id,
-      service.coverMedia
-      ? {
-          id: service.coverMedia.id,
-          url: service.coverMedia.url,
-        }
-      : null,
+      {
+        id: service.coverMedia.id,
+        url: service.coverMedia.url,
+      },
       service.categories?.map((sc: any) => sc.category.id.toString()) ?? [],
       service.created_at,
       service.updated_at,
