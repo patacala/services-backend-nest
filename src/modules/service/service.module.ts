@@ -6,6 +6,7 @@ import { PrismaServiceRepository } from './infrastructure/repositories/prisma-se
 import { ServiceRepository } from './domain/repositories/service.repository';
 import { CreateServiceUseCase } from './application/use-cases/createService';
 import { ServiceController } from './infrastructure/controllers/service.controller';
+import { GetUserServicesUseCase } from './application/use-cases/getUserServices';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ServiceController } from './infrastructure/controllers/service.controll
       useClass: PrismaServiceRepository,
     },
     CreateServiceUseCase,
+    GetUserServicesUseCase
   ],
   exports: [ServiceRepository],
 })

@@ -24,7 +24,7 @@ export class CreateServiceDto {
   @IsOptional()
   @IsNumber({}, { message: 'El precio base debe ser un número válido' })
   @Min(0, { message: 'El precio base no puede ser negativo' })
-  base_price_cents?: number;
+  price?: number;
 
   @IsOptional()
   @Matches(/^[A-Z]{3}$/, {
@@ -34,7 +34,7 @@ export class CreateServiceDto {
 
   @IsOptional()
   @IsString({ message: 'La ciudad debe ser un texto válido' })
-  location_city?: string;
+  city?: string;
 
   @IsOptional()
   @IsNumber({}, { message: 'La latitud debe ser un número válido' })
@@ -48,9 +48,9 @@ export class CreateServiceDto {
   @Max(180, { message: 'La longitud máxima es 180' })
   lon?: number;
 
-  @IsOptional()
-  @IsUUID('4', { message: 'El ID de la portada debe ser un UUID válido' })
-  cover_media_id?: string;
+  /* @IsNotEmpty({ message: 'Cover media ID is required' })
+  @IsString({ message: 'Cover media ID must be a string' }) */
+  coverMediaId: string;
 
   @IsOptional()
   @IsArray({ message: 'Las categorías deben enviarse en un arreglo' })

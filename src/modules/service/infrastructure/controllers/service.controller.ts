@@ -12,18 +12,27 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
 import { CreateServiceUseCase } from '../../application/use-cases/createService';
+import { CreateServiceDto } from '../dtos/service.dto';
+import { GetUserServicesUseCase } from '../../application/use-cases/getUserServices';
 
 @UseGuards(JwtAuthGuard)
 @Controller('services')
 export class ServiceController {
   constructor(
     private readonly createServiceUC: CreateServiceUseCase,
+    private readonly getUserServicesUC: GetUserServicesUseCase,
   ) {}
 
   @Post()
-  async createService(@Req() req, @Body() dto: any) {
+  async createService(@Req() req, @Body() dto: CreateServiceDto) {
     const userId = req.user.id;
     return this.createServiceUC.execute(userId, dto);
+  }
+
+  @Get('me')
+  async getMyServices(@Req() req) {
+    const userId = req.user.id;
+    return this.getUserServicesUC.execute(userId);
   }
 
   @Get()

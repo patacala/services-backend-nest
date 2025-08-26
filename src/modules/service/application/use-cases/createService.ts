@@ -19,12 +19,13 @@ export class CreateServiceUseCase {
           user_id: userId,
           title: dto.title,
           description: dto.description,
-          base_price_cents: dto.base_price_cents,
+          base_price_cents: dto.price,
           currency: dto.currency ?? 'USD',
-          location_city: dto.location_city,
+          location_city: dto.city,
           lat: dto.lat,
           lon: dto.lon,
-          cover_media_id: dto.cover_media_id ?? null,
+          cover_media_id: dto.coverMediaId && dto.coverMediaId.trim() !== '' 
+          ? dto.coverMediaId:null,
           categories: dto.categoryIds
             ? {
                 create: dto.categoryIds.map((id) => ({
@@ -54,7 +55,6 @@ export class CreateServiceUseCase {
         cover_media_id: service.cover_media_id,
         categories: service.categories.map((sc) => ({
           id: sc.category.id.toString(),
-          name: sc.category.name_es,
         })),
         coverMedia: service.coverMedia
           ? {
