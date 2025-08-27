@@ -8,7 +8,7 @@ import { ServiceStatus } from '@prisma/client';
 export class PrismaServiceRepository implements ServiceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: ServiceEntity): Promise<ServiceEntity> {
+  async create(data: Partial<ServiceEntity>): Promise<ServiceEntity> {
     const service = await this.prisma.service.create({
       data: {
         user_id: data.user_id!,
@@ -20,12 +20,47 @@ export class PrismaServiceRepository implements ServiceRepository {
         location_city: data.location_city ?? null,
         lat: data.lat ?? null,
         lon: data.lon ?? null,
-        cover_media_id: data.cover_media_id!,
+        cover_media_id: data.cover_media_id ?? null,
+        categories: data.categories
+          ? {
+              create: data.categories.map((categoryId) => ({
+                category_id: BigInt(categoryId),
+              })),
+            }
+          : undefined,
+      },
+      include: {
         categories: {
-          create: data.categories!.map((categoryId) => ({
-            category_id: BigInt(categoryId),
-          })),
+          include: { category: true },
         },
+        coverMedia: true,
+      },
+    });
+
+    return this.mapToEntity(service);
+  }
+
+  async update(id: string, data: Partial<ServiceEntity>): Promise<ServiceEntity> {
+    const service = await this.prisma.service.update({
+      where: { id },
+      data: {
+        title: data.title,
+        description: data.description,
+        base_price_cents: data.base_price_cents,
+        currency: data.currency,
+        status: data.status as ServiceStatus,
+        location_city: data.location_city,
+        lat: data.lat,
+        lon: data.lon,
+        cover_media_id: data.cover_media_id,
+        categories: data.categories
+          ? {
+              deleteMany: {},
+              create: data.categories.map((categoryId) => ({
+                category_id: BigInt(categoryId),
+              })),
+            }
+          : undefined,
       },
       include: {
         categories: {
@@ -51,10 +86,12 @@ export class PrismaServiceRepository implements ServiceRepository {
       service.lat,
       service.lon,
       service.cover_media_id,
-      {
-        id: service.coverMedia.id,
-        url: service.coverMedia.url,
-      },
+      service.coverMedia
+        ? {
+            id: service.coverMedia.id,
+            url: service.coverMedia.url,
+          }
+        : null,
       service.categories?.map((sc: any) => sc.category.id.toString()) ?? [],
       service.created_at,
       service.updated_at,

@@ -14,12 +14,14 @@ import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
 import { CreateServiceUseCase } from '../../application/use-cases/createService';
 import { CreateServiceDto } from '../dtos/service.dto';
 import { GetUserServicesUseCase } from '../../application/use-cases/getUserServices';
+import { UpdateServiceUseCase } from '../../application/use-cases/UpdateService';
 
 @UseGuards(JwtAuthGuard)
 @Controller('services')
 export class ServiceController {
   constructor(
     private readonly createServiceUC: CreateServiceUseCase,
+    private readonly updateServiceUC: UpdateServiceUseCase,
     private readonly getUserServicesUC: GetUserServicesUseCase,
   ) {}
 
@@ -61,12 +63,9 @@ export class ServiceController {
   }
 
   @Patch(':id')
-  async updateService(@Param('id') id: string, @Body() dto: any) {
-    return {
-      message: 'Update service endpoint (pending implementation)',
-      id,
-      data: dto,
-    };
+  async updateService(@Req() req, @Param('id') id: string, @Body() dto: any) {
+    const userId = req.user.id;
+    return this.updateServiceUC.execute(userId, id, dto);
   }
 
   @Delete(':id')
