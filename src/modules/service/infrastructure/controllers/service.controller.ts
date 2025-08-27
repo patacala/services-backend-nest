@@ -11,10 +11,11 @@ import {
   Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
-import { CreateServiceUseCase } from '../../application/use-cases/createService';
 import { CreateServiceDto } from '../dtos/service.dto';
-import { GetUserServicesUseCase } from '../../application/use-cases/getUserServices';
+import { CreateServiceUseCase } from '../../application/use-cases/createService';
 import { UpdateServiceUseCase } from '../../application/use-cases/UpdateService';
+import { GetUserServicesUseCase } from '../../application/use-cases/getUserServices';
+import { GetListServicesUseCase } from '../../application/use-cases/listServices';
 
 @UseGuards(JwtAuthGuard)
 @Controller('services')
@@ -22,6 +23,7 @@ export class ServiceController {
   constructor(
     private readonly createServiceUC: CreateServiceUseCase,
     private readonly updateServiceUC: UpdateServiceUseCase,
+    private readonly getListServicesUC: GetListServicesUseCase,
     private readonly getUserServicesUC: GetUserServicesUseCase,
   ) {}
 
@@ -48,10 +50,16 @@ export class ServiceController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return {
-      message: 'List services endpoint (pending implementation)',
-      filters: { query, tag, cat, city, near, radius, page, limit },
-    };
+    return await this.getListServicesUC.execute({
+      query,
+      tag,
+      cat,
+      city,
+      near,
+      radius,
+      page,
+      limit,
+    });
   }
 
   @Get(':id')

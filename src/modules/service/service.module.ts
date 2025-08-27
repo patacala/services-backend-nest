@@ -8,6 +8,7 @@ import { CreateServiceUseCase } from './application/use-cases/createService';
 import { ServiceController } from './infrastructure/controllers/service.controller';
 import { GetUserServicesUseCase } from './application/use-cases/getUserServices';
 import { UpdateServiceUseCase } from './application/use-cases/UpdateService';
+import { GetListServicesUseCase } from './application/use-cases/listServices';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UpdateServiceUseCase } from './application/use-cases/UpdateService';
     },
     CreateServiceUseCase,
     UpdateServiceUseCase,
+    GetListServicesUseCase,
     GetUserServicesUseCase
   ],
   exports: [ServiceRepository],
