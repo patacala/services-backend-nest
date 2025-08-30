@@ -27,12 +27,10 @@ export class GetCategoriesUseCase {
     const skip = (page - 1) * limit;
     const whereConditions: any = {};
 
-    // Filtro por padre (si se especifica)
     if (parent_id !== undefined) {
       whereConditions.parent_id = parent_id ? BigInt(parent_id) : null;
     }
 
-    // Filtro de búsqueda por nombre según idioma
     if (search) {
       const searchField = selectedLanguage === 'es' ? 'name_es' : 'name_en';
       whereConditions[searchField] = {
@@ -42,178 +40,27 @@ export class GetCategoriesUseCase {
     }
 
     try {
-      // Consulta principal con paginación
-      const [categories, total] = await Promise.all([
-        this.prisma.category.findMany({
-          where: whereConditions,
-          skip,
-          take: limit,
-          include: {
-            parent: true,
-            children: {
-              take: 5, // Limitar subcategorías para performance
-            },
-            _count: {
-              select: {
-                children: true,
-                users: true,
-                services: true,
-              }
-            }
-          },
-          orderBy: [
-            { parent_id: 'asc' },
-            selectedLanguage  === 'es' ? { name_es: 'asc' } : { name_en: 'asc' }
-          ]
-        }),
-        // Contar total para paginación
-        this.prisma.category.count({
-          where: whereConditions
-        })
-      ]);
-
-      // Transformar BigInt a string para serialización JSON
-      const transformedCategories = categories.map(category => ({
-        id: category.id.toString(),
-        name: selectedLanguage === 'es' ? category.name_es : category.name_en,
-        slug: selectedLanguage === 'es' ? category.slug_es : category.slug_en,
-        parent_id: category.parent_id?.toString() || null,
-        parent: category.parent ? {
-          id: category.parent.id.toString(),
-          name: selectedLanguage === 'es' ? category.parent.name_es : category.parent.name_en,
-          slug: selectedLanguage === 'es' ? category.parent.slug_es : category.parent.slug_en,
-        } : null,
-        children: category.children.map(child => ({
-          id: child.id.toString(),
-          name: selectedLanguage === 'es' ? child.name_es : child.name_en,
-          slug: selectedLanguage === 'es' ? child.slug_es : child.slug_en,
-        })),
-        counts: {
-          children: category._count.children,
-          users: category._count.users,
-          services: category._count.services,
-        }
-      }));
+      const categories = await this.prisma.category.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: [
+          { parent_id: 'asc' },
+          selectedLanguage === 'es' ? { name_es: 'asc' } : { name_en: 'asc' }
+        ]
+      });
 
       return {
-        categories: transformedCategories,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1,
-        }
-      };
+        categories: categories.map(category => ({
+          id: category.id.toString(),
+          name: selectedLanguage === 'es' ? category.name_es : category.name_en,
+          slug: selectedLanguage === 'es' ? category.slug_es : category.slug_en,
+          parent_id: category.parent_id?.toString() || null,
+        }))
+      }
     } catch (error) {
       console.error('Error al obtener categorías:', error);
       throw new Error('No se pudieron obtener las categorías');
-    }
-  }
-
-  // Método para obtener solo categorías padre
-  async getParentCategories(language: 'es' | 'en' = 'es') {
-    try {
-      const categories = await this.prisma.category.findMany({
-        where: { parent_id: null },
-        include: {
-          _count: {
-            select: {
-              children: true,
-              users: true,
-            }
-          }
-        },
-        orderBy: language === 'es' ? { name_es: 'asc' } : { name_en: 'asc' }
-      });
-
-      return categories.map(category => ({
-        id: category.id.toString(),
-        name: language === 'es' ? category.name_es : category.name_en,
-        slug: language === 'es' ? category.slug_es : category.slug_en,
-        counts: {
-          children: category._count.children,
-          users: category._count.users,
-        }
-      }));
-    } catch (error) {
-      console.error('Error al obtener categorías padre:', error);
-      throw new Error('No se pudieron obtener las categorías padre');
-    }
-  }
-
-  // Método para obtener una categoría específica
-  async getCategoryById(id: string, language: 'es' | 'en' = 'es') {
-    try {
-      const category = await this.prisma.category.findUnique({
-        where: { id: BigInt(id) },
-        include: {
-          parent: true,
-          children: true,
-          _count: {
-            select: {
-              children: true,
-              users: true,
-              services: true,
-            }
-          }
-        }
-      });
-
-      if (!category) {
-        throw new Error('Categoría no encontrada');
-      }
-
-      return {
-        id: category.id.toString(),
-        name: language === 'es' ? category.name_es : category.name_en,
-        slug: language === 'es' ? category.slug_es : category.slug_en,
-        parent_id: category.parent_id?.toString() || null,
-        parent: category.parent ? {
-          id: category.parent.id.toString(),
-          name: language === 'es' ? category.parent.name_es : category.parent.name_en,
-          slug: language === 'es' ? category.parent.slug_es : category.parent.slug_en,
-        } : null,
-        children: category.children.map(child => ({
-          id: child.id.toString(),
-          name: language === 'es' ? child.name_es : child.name_en,
-          slug: language === 'es' ? child.slug_es : child.slug_en,
-        })),
-        counts: {
-          children: category._count.children,
-          users: category._count.users,
-          services: category._count.services,
-        }
-      };
-    } catch (error) {
-      console.error('Error al obtener categoría:', error);
-      throw new Error('No se pudo obtener la categoría');
-    }
-  }
-
-  // Método para obtener categorías de un usuario específico
-  async getUserCategories(userId: string, language: 'es' | 'en' = 'es') {
-    try {
-      const userCategories = await this.prisma.userCategory.findMany({
-        where: { userId },
-        include: {
-          category: true
-        }
-      });
-
-      return userCategories.map(uc => ({
-        userId: uc.userId,
-        categoryId: uc.categoryId.toString(),
-        category: {
-          id: uc.category.id.toString(),
-          name: language === 'es' ? uc.category.name_es : uc.category.name_en,
-          slug: language === 'es' ? uc.category.slug_es : uc.category.slug_en,
-        }
-      }));
-    } catch (error) {
-      console.error('Error al obtener categorías del usuario:', error);
-      throw new Error('No se pudieron obtener las categorías del usuario');
     }
   }
 }

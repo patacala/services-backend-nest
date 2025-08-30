@@ -59,9 +59,6 @@ export class GetListServicesUseCase {
                             },
                         },
                     };
-
-                    console.log(city);
-                    console.log(cat);
                 }
             }
 
@@ -96,9 +93,7 @@ export class GetListServicesUseCase {
                     };
                 }
             }
-
-            console.log(JSON.stringify(where));
-
+            
             const services = await this.prisma.service.findMany({
                 where: where,
                 include: {

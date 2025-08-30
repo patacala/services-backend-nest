@@ -28,7 +28,7 @@ export class CategoryController {
     return this.getCategoriesUC.execute(query);
   }
 
-  @Get('parents')
+  /* @Get('parents')
   async getParentCategories(@Query('language') language?: 'es' | 'en') {
     return this.getCategoriesUC.getParentCategories(language);
   }
@@ -41,5 +41,5 @@ export class CategoryController {
   @Get(':id')
   async getCategoryById(@Param('id') id: string, @Query('language') language?: 'es' | 'en') {
     return this.getCategoriesUC.getCategoryById(id, language);
-  }
+  } */
 }
