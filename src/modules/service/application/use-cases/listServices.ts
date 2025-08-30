@@ -24,17 +24,6 @@ export class GetListServicesUseCase {
             const skip = page ? (parseInt(page, 10) - 1) * take : 0;
 
             const where: Prisma.ServiceWhereInput = {};
-            const include: Prisma.ServiceInclude = {
-                categories: {
-                    include: { category: true },
-                },
-                coverMedia: true,
-                user: {
-                    include: {
-                        profile: true,
-                    },
-                },
-            };
             const orderBy: Prisma.ServiceOrderByWithRelationInput = { created_at: 'desc' };
 
             if (query) {
@@ -49,11 +38,31 @@ export class GetListServicesUseCase {
             }
 
             if (cat) {
-                where.categories = {
-                    some: {
-                        category_id: BigInt(cat),
-                    },
-                };
+                const categoryIds = cat.split(',')
+                .map(id => id.trim())
+                .filter(id => id !== '')
+                .map(id => {
+                    try {
+                        return id;
+                    } catch (error) {
+                        console.warn(`Invalid category ID: ${id}`);
+                        return null;
+                    }
+                })
+                .filter(id => id !== null) as [];
+
+                if (categoryIds.length > 0) {
+                    where.categories = {
+                        some: {
+                            category_id: {
+                                in: categoryIds,
+                            },
+                        },
+                    };
+
+                    console.log(city);
+                    console.log(cat);
+                }
             }
 
             if (tag) {
@@ -87,6 +96,8 @@ export class GetListServicesUseCase {
                     };
                 }
             }
+
+            console.log(JSON.stringify(where));
 
             const services = await this.prisma.service.findMany({
                 where: where,
