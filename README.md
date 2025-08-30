@@ -32,6 +32,81 @@
 $ npm install
 ```
 
+## Database Setup with Prisma
+
+This project uses Prisma as an ORM to interact with a PostgreSQL database. Follow these steps to set up your database:
+
+### Environment Configuration
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+DATABASE_URL="postgresql://username:password@host:port/database_name"
+JWT_SECRET="your_jwt_secret"
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+```
+
+### Generate Prisma Client
+
+```bash
+$ npx prisma generate
+```
+
+### Run Migrations
+
+To apply all migrations to your database:
+
+```bash
+$ npx prisma migrate dev
+```
+
+To create a new migration after schema changes:
+
+```bash
+$ npx prisma migrate dev --name your_migration_name
+```
+
+### Seed Data
+
+This project includes seed data for categories. To populate your database with initial categories:
+
+```bash
+$ pnpm prisma:seed
+```
+
+The seed script will add the following categories:
+
+- Home (Hogar)
+  - Plumbing (Plomería)
+  - Electricity (Electricidad)
+- Gardening (Jardinería)
+- Education (Educación)
+  - Private Lessons (Clases Particulares)
+- Technology (Tecnología)
+  - Computer Repair (Reparación de Computadoras)
+- Health (Salud)
+  - Wellness (Bienestar)
+
+You can modify the seed data by editing the file `prisma/seed.ts`.
+
+### Prisma Studio
+
+To explore and modify your data with a visual interface:
+
+```bash
+$ npx prisma studio
+```
+
+## Firebase Configuration
+
+This project uses Firebase Admin SDK for authentication. You need to:
+
+1. Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/)
+2. Generate a private key file from Project Settings > Service Accounts
+3. Save the JSON file as `src/shared/firebase/firebase-service-account.json`
+
 ## Compile and run the project
 
 ```bash
