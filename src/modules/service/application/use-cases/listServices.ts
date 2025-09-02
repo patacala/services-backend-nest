@@ -6,6 +6,8 @@ interface ListServicesParams {
     query?: string;
     tag?: string;
     cat?: string;
+    minPrice?: number,
+    maxPrice?: number,
     city?: string;
     near?: string;
     radius?: string;
@@ -19,7 +21,7 @@ export class GetListServicesUseCase {
 
     async execute(params: ListServicesParams) {
         try {
-            const { query, tag, cat, city, near, radius, page, limit } = params;
+            const { query, tag, cat, minPrice, maxPrice, city, near, radius, page, limit } = params;
             const take = limit ? parseInt(limit, 10) : 10;
             const skip = page ? (parseInt(page, 10) - 1) * take : 0;
 
@@ -59,6 +61,20 @@ export class GetListServicesUseCase {
                             },
                         },
                     };
+                }
+            }
+
+            if (minPrice !== undefined || maxPrice !== undefined) {
+                where.base_price_cents = {};
+                
+                if (minPrice !== undefined) {
+                    const minPriceCents = parseInt(minPrice.toString(), 10);
+                    where.base_price_cents.gte = minPriceCents;
+                }
+                
+                if (maxPrice !== undefined) {
+                    const maxPriceCents = parseInt(maxPrice.toString(), 10);
+                    where.base_price_cents.lte = maxPriceCents;
                 }
             }
 
