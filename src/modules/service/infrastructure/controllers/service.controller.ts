@@ -41,6 +41,7 @@ export class ServiceController {
 
   @Get()
   async listServices(
+    @Req() req,
     @Query('query') query?: string,
     @Query('tag') tag?: string,
     @Query('cat') cat?: string,
@@ -52,6 +53,7 @@ export class ServiceController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
+    const userId = req.user?.id;
     return await this.getListServicesUC.execute({
       query,
       tag,
@@ -63,7 +65,7 @@ export class ServiceController {
       radius,
       page,
       limit,
-    });
+    }, userId);
   }
 
   @Get(':id')

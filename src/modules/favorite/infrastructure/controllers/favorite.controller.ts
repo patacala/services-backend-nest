@@ -8,7 +8,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
-import { CreateFavoriteDto, DeleteFavoriteDto } from '../dtos/favorite.dto';
+import { CreateFavoriteDto } from '../dtos/favorite.dto';
 import { CreateFavoriteUseCase } from '../../application/use-cases/createFavorite';
 import { DeleteFavoriteUseCase } from '../../application/use-cases/deleteFavorite';
 

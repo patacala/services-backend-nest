@@ -19,7 +19,7 @@ interface ListServicesParams {
 export class GetListServicesUseCase {
     constructor(private readonly prisma: PrismaService) {}
 
-    async execute(params: ListServicesParams) {
+    async execute(params: ListServicesParams, userId?: string) {
         try {
             const { query, tag, cat, minPrice, maxPrice, city, near, radius, page, limit } = params;
             const take = limit ? parseInt(limit, 10) : 10;
@@ -122,6 +122,11 @@ export class GetListServicesUseCase {
                             profile: true,
                         },
                     },
+                    favorites: userId ? {
+                        where: {
+                            user_id: userId,
+                        },
+                    } : false,
                 },
                 orderBy: orderBy,
                 take: take,
@@ -148,6 +153,7 @@ export class GetListServicesUseCase {
                 lon: service.lon,
                 createdAt: service.created_at,
                 updatedAt: service.updated_at,
+                isFavorite: userId ? service.favorites.length > 0 : false,
             }));
 
             return {
