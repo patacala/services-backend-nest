@@ -17,6 +17,14 @@
     archived
   }
 
+  enum BookServiceStatus {
+    pending 
+    accepted
+    rejected 
+    completed
+    cancelled
+  }
+
   enum MediaKind {
     image
     video
@@ -55,6 +63,7 @@
     message
     profile
   }
+  
 
   //
   // MODELS
@@ -84,8 +93,9 @@
     comments       Comment[]        @relation("UserComments")
     conversationsCreated Conversation[] @relation("UserConversations")
     messageReceipts MessageReceipt[] @relation("UserReceipts")
-    uploadIntents   UploadIntent[]   @relation("UserUploadsIntents")
+    uploadIntents   UploadIntent[] @relation("UserUploadsIntents")
     categories     UserCategory[]
+    bookings BookService[] @relation("UserBookings")
   }
 
   model Profile {
@@ -167,7 +177,22 @@
     comments   Comment[]
     ratings    Rating[]
     favorites  Favorite[]
+    bookings   BookService[] @relation("ServiceBookings")
     mediaLinks MediaLink[] @relation("ServiceLinks")
+  }
+
+  model BookService {
+    id            String            @id @default(uuid())
+    serviceId     String
+    service       Service           @relation("ServiceBookings", fields: [serviceId], references: [id])
+    userId        String
+    user          User              @relation("UserBookings", fields: [userId], references: [id])
+    dateTime      DateTime
+    address       String
+    comments      String?
+    status        BookServiceStatus @default(pending)
+    createdAt     DateTime          @default(now())
+    updatedAt     DateTime          @updatedAt
   }
 
   model ServiceCategory {
