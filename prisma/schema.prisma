@@ -1,405 +1,404 @@
-  generator client {
-    provider = "prisma-client-js"
-  }
-
-  datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-  }
-
-  //
-  // ENUMS
-  //
-  enum ServiceStatus {
-    draft
-    published
-    paused
-    archived
-  }
-
-  enum BookServiceStatus {
-    pending 
-    accepted
-    rejected 
-    completed
-    cancelled
-  }
-
-  enum MediaKind {
-    image
-    video
-  }
-
-  enum MediaProvider {
-    cloudflare_images
-    mux
-  }
-
-  enum MediaOwner {
-    service
-    comment
-    rating
-    message
-    profile
-  }
-
-  enum RatingVisibility {
-    public
-    hidden
-  }
-
-  enum SubscriptionStatus {
-    trialing
-    active
-    past_due
-    canceled
-    incomplete
-  }
-
-  enum UploadTarget {
-    service
-    comment
-    rating
-    message
-    profile
-  }
-  
-
-  //
-  // MODELS
-  //
-
-  model User {
-    id           String    @id @default(uuid()) @db.Uuid
-    firebaseUid  String    @unique
-    email        String?   @unique   // opcional: algunos usuarios solo celular
-    phone        String?   @unique   // opcional: algunos usuarios solo email
-    displayName  String?
-    role         String    @default("seeker")
-    createdAt    DateTime  @default(now())
-    updatedAt    DateTime  @default(now())
-
-    profile        Profile?
-    services       Service[]
-    ratingsGiven   Rating[]   @relation("ratingsGiven")
-    ratingsRecv    Rating[]   @relation("ratingsRecv")
-    messages       Message[]  @relation("messagesSent")
-    favorites      Favorite[]
-    conversations  ConversationParticipant[]
-    subscriptions  Subscription[]
-    mediaFiles     MediaFile[] @relation("UserUploads")
-    tags           Tag[]
-
-    comments       Comment[]        @relation("UserComments")
-    conversationsCreated Conversation[] @relation("UserConversations")
-    messageReceipts MessageReceipt[] @relation("UserReceipts")
-    uploadIntents   UploadIntent[] @relation("UserUploadsIntents")
-    categories     UserCategory[]
-    bookings BookService[] @relation("UserBookings")
-  }
-
-  model Profile {
-    user_id         String    @id @db.Uuid
-    user            User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-    name            String?
-    bio             String?
-    email           String?
-    phone           String?
-    location_city   String?
-    location_country String?
-    lat             Float?
-    lon             Float?
-    address         String?
-
-    avatar_media_id String?   @db.Uuid
-    avatar          MediaFile? @relation("ProfileAvatar", fields: [avatar_media_id], references: [id], onDelete: SetNull)
-
-    created_at DateTime @default(now())
-    updated_at DateTime @default(now())
-  }
-
-  model Category {
-    id       BigInt   @id @default(autoincrement())
-    name_es String
-    name_en String
-    slug_es String @unique
-    slug_en String @unique
-    parent_id BigInt?
-    parent   Category?   @relation("CategoryToCategory", fields: [parent_id], references: [id])
-    children Category[]  @relation("CategoryToCategory")
-    services ServiceCategory[]
-    users    UserCategory[]
-  }
-
-  model UserCategory {
-    userId     String   @db.Uuid
-    categoryId BigInt
-
-    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-    @@id([userId, categoryId])
-  }
-
-  model Tag {
-    id         BigInt    @id @default(autoincrement())
-    name       String
-    slug       String    @unique
-    created_by String?   @db.Uuid
-    creator    User?     @relation(fields: [created_by], references: [id], onDelete: SetNull)
-
-    services   ServiceTag[]
-  }
-
-  model Service {
-    id              String     @id @default(uuid()) @db.Uuid
-    user_id         String     @db.Uuid
-    user            User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-    title           String
-    description     String
-    base_price_cents Int?
-    currency        String?    @default("USD")
-    status          ServiceStatus @default(published)
-    location_city   String?
-    lat             Float?
-    lon             Float?
-
-    cover_media_id  String?    @db.Uuid
-    coverMedia      MediaFile? @relation("ServiceCover", fields: [cover_media_id], references: [id], onDelete: SetNull)
-
-    created_at      DateTime @default(now())
-    updated_at      DateTime @default(now())
-
-    categories ServiceCategory[]
-    tags       ServiceTag[]
-    comments   Comment[]
-    ratings    Rating[]
-    favorites  Favorite[]
-    bookings   BookService[] @relation("ServiceBookings")
-    mediaLinks MediaLink[] @relation("ServiceLinks")
-  }
-
-  model BookService {
-    id            String            @id @default(uuid())
-    serviceId     String
-    service       Service           @relation("ServiceBookings", fields: [serviceId], references: [id])
-    userId        String
-    user          User              @relation("UserBookings", fields: [userId], references: [id])
-    dateTime      DateTime
-    address       String
-    comments      String?
-    status        BookServiceStatus @default(pending)
-    createdAt     DateTime          @default(now())
-    updatedAt     DateTime          @updatedAt
-  }
-
-  model ServiceCategory {
-    service_id  String   @db.Uuid
-    category_id BigInt
-
-    service  Service  @relation(fields: [service_id], references: [id], onDelete: Cascade)
-    category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-
-    @@id([service_id, category_id])
-  }
-
-  model ServiceTag {
-    service_id String @db.Uuid
-    tag_id     BigInt
-
-    service Service @relation(fields: [service_id], references: [id], onDelete: Cascade)
-    tag     Tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
-
-    @@id([service_id, tag_id])
-  }
-
-  model MediaFile {
-    id                  String   @id @default(uuid()) @db.Uuid
-    uploaded_by         String   @db.Uuid
-    uploader            User     @relation("UserUploads", fields: [uploaded_by], references: [id], onDelete: Cascade)
-
-    kind                MediaKind
-    provider            MediaProvider
-    provider_ref        String
-    provider_playback_id String?
-    public_url          String?
-    width               Int?
-    height              Int?
-    duration_seconds    Int?
-    created_at          DateTime @default(now())
-
-    avatarOf   Profile[]  @relation("ProfileAvatar")
-    coverOf    Service[]  @relation("ServiceCover")
-    messageOf  Message[]  @relation("MessageMedia")
-
-    links      MediaLink[]
-
-    @@unique([provider, provider_ref])
-  }
-
-  model MediaLink {
-    media_id   String   @db.Uuid
-    owner_type MediaOwner
-    owner_id   String   @db.Uuid
-    service_id String?  @db.Uuid
-    position   Int?     @default(0)
-    created_at DateTime @default(now())
-
-    media   MediaFile @relation(fields: [media_id], references: [id], onDelete: Cascade)
-    service Service?  @relation("ServiceLinks", fields: [service_id], references: [id], onDelete: Cascade)
-
-    @@id([owner_type, owner_id, media_id])
-  }
-
-  model Comment {
-    id         String    @id @default(uuid()) @db.Uuid
-    service_id String    @db.Uuid
-    user_id    String    @db.Uuid
-    parent_id  String?   @db.Uuid
-
-    service    Service   @relation(fields: [service_id], references: [id], onDelete: Cascade)
-    user       User      @relation("UserComments", fields: [user_id], references: [id], onDelete: Cascade)
-    parent     Comment?  @relation("CommentParent", fields: [parent_id], references: [id], onDelete: Cascade)
-    replies    Comment[] @relation("CommentParent")
-
-    body       String
-    created_at DateTime @default(now())
-  }
-
-  model Favorite {
-    user_id    String   @db.Uuid
-    service_id String   @db.Uuid
-    created_at DateTime @default(now())
-
-    user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-    service Service @relation(fields: [service_id], references: [id], onDelete: Cascade)
-
-    @@id([user_id, service_id])
-  }
-
-  model Conversation {
-    id          String    @id @default(uuid()) @db.Uuid
-    created_by  String    @db.Uuid
-    createdAt   DateTime  @default(now())
-
-    createdBy     User                     @relation("UserConversations", fields: [created_by], references: [id], onDelete: Cascade)
-    participants  ConversationParticipant[]
-    messages      Message[]
-  }
-
-  model ConversationParticipant {
-    conversation_id String   @db.Uuid
-    user_id         String   @db.Uuid
-    role            String?  @default("member")
-    joined_at       DateTime @default(now())
-
-    conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
-    user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-    @@id([conversation_id, user_id])
-  }
-
-  model Message {
-    id              String    @id @default(uuid()) @db.Uuid
-    conversation_id String    @db.Uuid
-    sender_id       String    @db.Uuid
-    body            String?
-
-    media_id String?   @db.Uuid
-    media    MediaFile? @relation("MessageMedia", fields: [media_id], references: [id], onDelete: SetNull)
-
-    created_at DateTime @default(now())
-
-    conversation Conversation   @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
-    sender       User           @relation("messagesSent", fields: [sender_id], references: [id], onDelete: Cascade)
-    receipts     MessageReceipt[]
-  }
-
-  model MessageReceipt {
-    message_id String   @db.Uuid
-    user_id    String   @db.Uuid
-    status     String
-    at         DateTime @default(now())
-
-    message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
-    user    User    @relation("UserReceipts", fields: [user_id], references: [id], onDelete: Cascade)
-
-    @@id([message_id, user_id, status])
-  }
-
-  model Rating {
-    id            String   @id @default(uuid()) @db.Uuid
-    rated_user_id String   @db.Uuid
-    rater_user_id String   @db.Uuid
-    service_id    String?  @db.Uuid
-    score         Int
-    title         String?
-    body          String?
-    visibility    RatingVisibility @default(public)
-    created_at    DateTime @default(now())
-
-    ratedUser User    @relation("ratingsRecv", fields: [rated_user_id], references: [id], onDelete: Cascade)
-    raterUser User    @relation("ratingsGiven", fields: [rater_user_id], references: [id], onDelete: Cascade)
-    service   Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
-
-    @@unique([rated_user_id, rater_user_id, service_id])
-  }
-
-  model Plan {
-    id         String   @id @default(uuid()) @db.Uuid
-    code       String   @unique
-    name       String
-    price_cents Int
-    currency   String?  @default("USD")
-    interval   String
-    created_at DateTime @default(now())
-
-    subscriptions Subscription[]
-    limits        PlanLimit[]
-  }
-
-  model PlanLimit {
-    id      BigInt  @id @default(autoincrement())
-    plan_id String  @db.Uuid
-    plan    Plan    @relation(fields: [plan_id], references: [id], onDelete: Cascade)
-
-    key   String
-    value Int
-  }
-
-  model Subscription {
-    id        String   @id @default(uuid()) @db.Uuid
-    user_id   String   @db.Uuid
-    user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-    plan_id   String   @db.Uuid
-    plan      Plan     @relation(fields: [plan_id], references: [id])
-
-    provider  String?  @default("stripe")
-    provider_subscription_id String?
-    status    SubscriptionStatus
-    current_period_start DateTime
-    current_period_end   DateTime
-    cancel_at DateTime?
-    created_at DateTime @default(now())
-  }
-
-  model UploadIntent {
-    id        String   @id @default(uuid()) @db.Uuid
-    user_id   String   @db.Uuid
-    user      User     @relation("UserUploadsIntents", fields: [user_id], references: [id], onDelete: Cascade)
-
-    target    UploadTarget
-    target_id String?  @db.Uuid
-    kind      MediaKind
-    provider  MediaProvider
-    idempotency_key String
-    status    String   @default("pending")
-    request_ip String?
-    expires_at DateTime
-    created_at DateTime @default(now())
-
-    @@unique([user_id, idempotency_key])
-  }
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//
+// ENUMS
+//
+enum ServiceStatus {
+  draft
+  published
+  paused
+  archived
+}
+
+enum BookServiceStatus {
+  pending
+  accepted
+  rejected
+  completed
+  cancelled
+}
+
+enum MediaKind {
+  image
+  video
+}
+
+enum MediaProvider {
+  cloudflare_images
+  mux
+}
+
+enum MediaOwner {
+  service
+  comment
+  rating
+  message
+  profile
+}
+
+enum RatingVisibility {
+  public
+  hidden
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  canceled
+  incomplete
+}
+
+enum UploadTarget {
+  service
+  comment
+  rating
+  message
+  profile
+}
+
+//
+// MODELS
+//
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  firebaseUid String   @unique
+  email       String?  @unique // opcional: algunos usuarios solo celular
+  phone       String?  @unique // opcional: algunos usuarios solo email
+  displayName String?
+  role        String   @default("seeker")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  profile       Profile?
+  services      Service[]
+  ratingsGiven  Rating[]                  @relation("ratingsGiven")
+  ratingsRecv   Rating[]                  @relation("ratingsRecv")
+  messages      Message[]                 @relation("messagesSent")
+  favorites     Favorite[]
+  conversations ConversationParticipant[]
+  subscriptions Subscription[]
+  mediaFiles    MediaFile[]               @relation("UserUploads")
+  tags          Tag[]
+
+  comments             Comment[]        @relation("UserComments")
+  conversationsCreated Conversation[]   @relation("UserConversations")
+  messageReceipts      MessageReceipt[] @relation("UserReceipts")
+  uploadIntents        UploadIntent[]   @relation("UserUploadsIntents")
+  categories           UserCategory[]
+  bookings             BookService[]    @relation("UserBookings")
+}
+
+model Profile {
+  user_id String @id @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  name             String?
+  bio              String?
+  email            String?
+  phone            String?
+  location_city    String?
+  location_country String?
+  lat              Float?
+  lon              Float?
+  address          String?
+
+  avatar_media_id String?    @db.Uuid
+  avatar          MediaFile? @relation("ProfileAvatar", fields: [avatar_media_id], references: [id], onDelete: SetNull)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+}
+
+model Category {
+  id        BigInt            @id @default(autoincrement())
+  name_es   String
+  name_en   String
+  slug_es   String            @unique
+  slug_en   String            @unique
+  parent_id BigInt?
+  parent    Category?         @relation("CategoryToCategory", fields: [parent_id], references: [id])
+  children  Category[]        @relation("CategoryToCategory")
+  services  ServiceCategory[]
+  users     UserCategory[]
+}
+
+model UserCategory {
+  userId     String @db.Uuid
+  categoryId BigInt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, categoryId])
+}
+
+model Tag {
+  id         BigInt  @id @default(autoincrement())
+  name       String
+  slug       String  @unique
+  created_by String? @db.Uuid
+  creator    User?   @relation(fields: [created_by], references: [id], onDelete: SetNull)
+
+  services ServiceTag[]
+}
+
+model Service {
+  id      String @id @default(uuid()) @db.Uuid
+  user_id String @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  title            String
+  description      String
+  base_price_cents Int?
+  currency         String?       @default("USD")
+  status           ServiceStatus @default(published)
+  location_city    String?
+  lat              Float?
+  lon              Float?
+
+  cover_media_id String?    @db.Uuid
+  coverMedia     MediaFile? @relation("ServiceCover", fields: [cover_media_id], references: [id], onDelete: SetNull)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  categories ServiceCategory[]
+  tags       ServiceTag[]
+  comments   Comment[]
+  ratings    Rating[]
+  favorites  Favorite[]
+  bookings   BookService[]     @relation("ServiceBookings")
+  mediaLinks MediaLink[]       @relation("ServiceLinks")
+}
+
+model BookService {
+  id        String            @id @default(uuid()) @db.Uuid
+  serviceId String            @db.Uuid
+  service   Service           @relation("ServiceBookings", fields: [serviceId], references: [id])
+  userId    String            @db.Uuid
+  user      User              @relation("UserBookings", fields: [userId], references: [id])
+  dateTime  DateTime
+  address   String
+  comments  String?
+  status    BookServiceStatus @default(pending)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model ServiceCategory {
+  service_id  String @db.Uuid
+  category_id BigInt
+
+  service  Service  @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@id([service_id, category_id])
+}
+
+model ServiceTag {
+  service_id String @db.Uuid
+  tag_id     BigInt
+
+  service Service @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([service_id, tag_id])
+}
+
+model MediaFile {
+  id          String @id @default(uuid()) @db.Uuid
+  uploaded_by String @db.Uuid
+  uploader    User   @relation("UserUploads", fields: [uploaded_by], references: [id], onDelete: Cascade)
+
+  kind                 MediaKind
+  provider             MediaProvider
+  provider_ref         String
+  provider_playback_id String?
+  public_url           String?
+  width                Int?
+  height               Int?
+  duration_seconds     Int?
+  created_at           DateTime      @default(now())
+
+  avatarOf  Profile[] @relation("ProfileAvatar")
+  coverOf   Service[] @relation("ServiceCover")
+  messageOf Message[] @relation("MessageMedia")
+
+  links MediaLink[]
+
+  @@unique([provider, provider_ref])
+}
+
+model MediaLink {
+  media_id   String     @db.Uuid
+  owner_type MediaOwner
+  owner_id   String     @db.Uuid
+  service_id String?    @db.Uuid
+  position   Int?       @default(0)
+  created_at DateTime   @default(now())
+
+  media   MediaFile @relation(fields: [media_id], references: [id], onDelete: Cascade)
+  service Service?  @relation("ServiceLinks", fields: [service_id], references: [id], onDelete: Cascade)
+
+  @@id([owner_type, owner_id, media_id])
+}
+
+model Comment {
+  id         String  @id @default(uuid()) @db.Uuid
+  service_id String  @db.Uuid
+  user_id    String  @db.Uuid
+  parent_id  String? @db.Uuid
+
+  service Service   @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  user    User      @relation("UserComments", fields: [user_id], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentParent", fields: [parent_id], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentParent")
+
+  body       String
+  created_at DateTime @default(now())
+}
+
+model Favorite {
+  user_id    String   @db.Uuid
+  service_id String   @db.Uuid
+  created_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [service_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, service_id])
+}
+
+model Conversation {
+  id         String   @id @default(uuid()) @db.Uuid
+  created_by String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  createdBy    User                      @relation("UserConversations", fields: [created_by], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  conversation_id String   @db.Uuid
+  user_id         String   @db.Uuid
+  role            String?  @default("member")
+  joined_at       DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([conversation_id, user_id])
+}
+
+model Message {
+  id              String  @id @default(uuid()) @db.Uuid
+  conversation_id String  @db.Uuid
+  sender_id       String  @db.Uuid
+  body            String?
+
+  media_id String?    @db.Uuid
+  media    MediaFile? @relation("MessageMedia", fields: [media_id], references: [id], onDelete: SetNull)
+
+  created_at DateTime @default(now())
+
+  conversation Conversation     @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender       User             @relation("messagesSent", fields: [sender_id], references: [id], onDelete: Cascade)
+  receipts     MessageReceipt[]
+}
+
+model MessageReceipt {
+  message_id String   @db.Uuid
+  user_id    String   @db.Uuid
+  status     String
+  at         DateTime @default(now())
+
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
+  user    User    @relation("UserReceipts", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([message_id, user_id, status])
+}
+
+model Rating {
+  id            String           @id @default(uuid()) @db.Uuid
+  rated_user_id String           @db.Uuid
+  rater_user_id String           @db.Uuid
+  service_id    String?          @db.Uuid
+  score         Int
+  title         String?
+  body          String?
+  visibility    RatingVisibility @default(public)
+  created_at    DateTime         @default(now())
+
+  ratedUser User     @relation("ratingsRecv", fields: [rated_user_id], references: [id], onDelete: Cascade)
+  raterUser User     @relation("ratingsGiven", fields: [rater_user_id], references: [id], onDelete: Cascade)
+  service   Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
+
+  @@unique([rated_user_id, rater_user_id, service_id])
+}
+
+model Plan {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique
+  name        String
+  price_cents Int
+  currency    String?  @default("USD")
+  interval    String
+  created_at  DateTime @default(now())
+
+  subscriptions Subscription[]
+  limits        PlanLimit[]
+}
+
+model PlanLimit {
+  id      BigInt @id @default(autoincrement())
+  plan_id String @db.Uuid
+  plan    Plan   @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+
+  key   String
+  value Int
+}
+
+model Subscription {
+  id      String @id @default(uuid()) @db.Uuid
+  user_id String @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  plan_id String @db.Uuid
+  plan    Plan   @relation(fields: [plan_id], references: [id])
+
+  provider                 String?            @default("stripe")
+  provider_subscription_id String?
+  status                   SubscriptionStatus
+  current_period_start     DateTime
+  current_period_end       DateTime
+  cancel_at                DateTime?
+  created_at               DateTime           @default(now())
+}
+
+model UploadIntent {
+  id      String @id @default(uuid()) @db.Uuid
+  user_id String @db.Uuid
+  user    User   @relation("UserUploadsIntents", fields: [user_id], references: [id], onDelete: Cascade)
+
+  target          UploadTarget
+  target_id       String?       @db.Uuid
+  kind            MediaKind
+  provider        MediaProvider
+  idempotency_key String
+  status          String        @default("pending")
+  request_ip      String?
+  expires_at      DateTime
+  created_at      DateTime      @default(now())
+
+  @@unique([user_id, idempotency_key])
+}
