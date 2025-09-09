@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { GetCategoriesUseCase } from '../../application/use-cases/getCategories';
 import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
 

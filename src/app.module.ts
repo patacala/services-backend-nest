@@ -4,7 +4,7 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ServiceModule } from './modules/service/service.module';
 import { FavoriteModule } from './modules/favorite/favorite.module';
-import { BookServiceController } from './modules/bookService/infrastructure/controllers/bookService.controller';
+import { BookServiceModule } from './modules/bookService/bookService.module';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { BookServiceController } from './modules/bookService/infrastructure/cont
     CategoryModule,
     ServiceModule,
     FavoriteModule,
-    BookServiceController
+    BookServiceModule
   ],
 })
 export class AppModule {}
