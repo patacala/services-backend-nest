@@ -10,7 +10,7 @@ import { CreateBookServiceDto } from '../dtos/bookService.dto';
 import { CreateBookServiceUseCase } from '../../application/use-cases/bookService';
 
 @UseGuards(JwtAuthGuard)
-@Controller('bookServices')
+@Controller('book-services')
 export class BookServiceController {
   constructor(
     private readonly createBookServiceUC: CreateBookServiceUseCase,
