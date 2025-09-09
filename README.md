@@ -61,7 +61,6 @@ To apply all migrations to your database:
 ```bash
 $ npx prisma migrate dev
 ```
-
 To create a new migration after schema changes:
 
 ```bash

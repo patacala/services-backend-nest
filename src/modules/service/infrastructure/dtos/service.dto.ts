@@ -8,6 +8,7 @@ import {
   Matches,
   IsArray,
   ArrayNotEmpty,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateServiceDto {
