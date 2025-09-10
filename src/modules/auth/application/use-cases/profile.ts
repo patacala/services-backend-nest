@@ -7,12 +7,10 @@ export class GetProfileUseCase {
 
   async execute(userId: string) {
     try {
-      // Buscar el perfil por el ID del usuario
       const profile = await this.prisma.profile.findUnique({
         where: { user_id: userId },
       });
 
-      // Si no se encuentra, lanzar excepción
       if (!profile) {
         throw new UnauthorizedException(`Perfil con ID ${userId} no encontrado.`);
       }

@@ -3,8 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { SharedModule } from '@/shared/shared.module';
 import { BookServiceController } from './infrastructure/controllers/bookService.controller';
 import { BookServiceRepository } from './domain/repositories/bookService.repository';
-import { CreateBookServiceUseCase } from './application/use-cases/bookService';
+import { CreateBookServiceUseCase } from './application/use-cases/createBookService';
 import { PrismaBookServiceRepository } from './infrastructure/repositories/prisma-bookService.repository';
+import { GetUserBookServicesUseCase } from './application/use-cases/getUserBookServices';
 
 
 @Module({
@@ -19,6 +20,7 @@ import { PrismaBookServiceRepository } from './infrastructure/repositories/prism
       useClass: PrismaBookServiceRepository,
     },
     CreateBookServiceUseCase,
+    GetUserBookServicesUseCase
   ],
   exports: [BookServiceRepository],
 })
