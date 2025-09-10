@@ -24,6 +24,7 @@ export class GetUserBookServicesUseCase {
               },
             },
           },
+          user: true,
         },
         orderBy: {
           created_at: 'desc',
@@ -50,6 +51,7 @@ export class GetUserBookServicesUseCase {
         responsibleName: booking.responsible_name,
         phoneNumber: booking.phone_number,
         status: booking.status,
+        role: booking.user.role,
         provider: {
           id: booking.service.user.id,
           name: booking.service.user.profile?.name ?? '',
