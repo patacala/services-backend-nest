@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class GetProfileUseCase {
 
       // Si no se encuentra, lanzar excepción
       if (!profile) {
-        throw new NotFoundException(`Perfil con ID ${userId} no encontrado.`);
+        throw new UnauthorizedException(`Perfil con ID ${userId} no encontrado.`);
       }
 
       return {
@@ -26,7 +26,6 @@ export class GetProfileUseCase {
         address: profile.address
       };
     } catch (error) {
-      console.error('Error al obtener el perfil:', error);
       throw error;
     }
   }
