@@ -16,6 +16,7 @@ import { CreateServiceUseCase } from '../../application/use-cases/createService'
 import { UpdateServiceUseCase } from '../../application/use-cases/updateService';
 import { GetUserServicesUseCase } from '../../application/use-cases/getUserServices';
 import { GetListServicesUseCase } from '../../application/use-cases/listServices';
+import { CreateAccountProvServiceUseCase } from '../../application/use-cases/createAccountProvService';
 
 @UseGuards(JwtAuthGuard)
 @Controller('services')
@@ -25,6 +26,7 @@ export class ServiceController {
     private readonly updateServiceUC: UpdateServiceUseCase,
     private readonly getListServicesUC: GetListServicesUseCase,
     private readonly getUserServicesUC: GetUserServicesUseCase,
+    private readonly createAccountProvServiceUC: CreateAccountProvServiceUseCase,
   ) {}
 
   @Post()
@@ -115,5 +117,11 @@ export class ServiceController {
       id,
       mediaId,
     };
+  }
+
+  @Post('provider-account')
+  async createProviderAccount(@Req() req, @Body() dto: CreateServiceDto) {
+    const userId = req.user.id;
+    return this.createAccountProvServiceUC.execute(userId, dto);
   }
 }

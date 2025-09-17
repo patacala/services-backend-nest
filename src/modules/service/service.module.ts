@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SharedModule } from '@/shared/shared.module';
 
 import { PrismaServiceRepository } from './infrastructure/repositories/prisma-service.repository';
@@ -9,11 +9,20 @@ import { ServiceController } from './infrastructure/controllers/service.controll
 import { GetUserServicesUseCase } from './application/use-cases/getUserServices';
 import { UpdateServiceUseCase } from './application/use-cases/updateService';
 import { GetListServicesUseCase } from './application/use-cases/listServices';
+import { CreateAccountProvServiceUseCase } from './application/use-cases/createAccountProvService';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     ConfigModule,
     SharedModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (c: ConfigService) => ({
+        secret: c.get<string>('JWT_SECRET'),
+      }),
+    }),
   ],
   controllers: [ServiceController],
   providers: [
@@ -24,8 +33,12 @@ import { GetListServicesUseCase } from './application/use-cases/listServices';
     CreateServiceUseCase,
     UpdateServiceUseCase,
     GetListServicesUseCase,
-    GetUserServicesUseCase
+    GetUserServicesUseCase,
+    CreateAccountProvServiceUseCase
   ],
-  exports: [ServiceRepository],
+  exports: [
+    ServiceRepository,
+    JwtModule
+  ],
 })
 export class ServiceModule {}
