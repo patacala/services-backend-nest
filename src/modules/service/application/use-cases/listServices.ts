@@ -154,7 +154,17 @@ export class GetListServicesUseCase {
                 createdAt: service.created_at,
                 updatedAt: service.updated_at,
                 isFavorite: userId ? service.favorites.length > 0 : false,
+                media:[
+                    {
+                        id: service.coverMedia.id,
+                        url: service.coverMedia.public_url,
+                        kind: service.coverMedia.kind,
+                        provider: service.coverMedia.provider,
+                        created_at: service.coverMedia.created_at,
+                    }
+                ]
             }));
+            console.log(formattedServices[0].media)
 
             return {
                 data: formattedServices,

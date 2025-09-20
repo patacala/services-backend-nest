@@ -26,8 +26,7 @@ export class GetUserServicesUseCase {
           created_at: 'desc',
         },
       });
-
-      return services.map((service) => ({
+      const servicesMapped = services.map((service) => ({
         id: service.id,
         title: service.title,
         description: service.description,
@@ -44,9 +43,20 @@ export class GetUserServicesUseCase {
         city: service.location_city,
         lat: service.lat,
         lon: service.lon,
+        media: service.coverMedia ? [
+          {
+            id: service.coverMedia.id,
+            url: service.coverMedia.public_url,
+            kind: service.coverMedia.kind,
+            provider: service.coverMedia.provider,
+            created_at: service.coverMedia.created_at,
+          }
+        ] : [],
         createdAt: service.created_at,
         updatedAt: service.updated_at,
       }));
+
+      return servicesMapped
     } catch (error) {
       console.error('Error fetching user services:', error);
       throw new BadRequestException('Failed to fetch user services');
