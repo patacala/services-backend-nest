@@ -58,7 +58,7 @@ export class CloudflareImagesService {
    * @param options - Additional options like id, requireSignedURLs, metadata
    */
   async uploadImage(
-    file: Blob | Buffer,
+    file: Blob | Buffer | Uint8Array | ArrayBuffer,
     filename: string,
     options?: {
       id?: string; // Custom image ID
@@ -69,10 +69,27 @@ export class CloudflareImagesService {
     const form = new FormData();
 
     // Convert Buffer to Blob if needed
-    const blob =
-      typeof Blob !== 'undefined' && file instanceof Blob
-        ? file
-        : new Blob([file as Buffer]);
+    const blob = (() => {
+      if (typeof Blob !== 'undefined' && file instanceof Blob) return file;
+      // Uint8Array -> copy into a fresh ArrayBuffer (guaranteed ArrayBuffer, not SharedArrayBuffer)
+      if (file instanceof Uint8Array) {
+        const ab = new ArrayBuffer(file.byteLength);
+        new Uint8Array(ab).set(file);
+        return new Blob([ab]);
+      }
+      // ArrayBuffer path (already proper type)
+      if (file instanceof ArrayBuffer) {
+        return new Blob([file]);
+      }
+      // Buffer path (Node.js) -> copy into a fresh ArrayBuffer
+      if (typeof Buffer !== 'undefined' && Buffer.isBuffer(file)) {
+        const b = file as Buffer;
+        const ab = new ArrayBuffer(b.byteLength);
+        new Uint8Array(ab).set(b);
+        return new Blob([ab]);
+      }
+      throw new Error('Unsupported file type for uploadImage');
+    })();
 
     form.append('file', blob, filename);
 
