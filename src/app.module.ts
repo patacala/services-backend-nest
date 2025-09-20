@@ -5,6 +5,7 @@ import { CategoryModule } from './modules/category/category.module';
 import { ServiceModule } from './modules/service/service.module';
 import { FavoriteModule } from './modules/favorite/favorite.module';
 import { BookServiceModule } from './modules/bookService/bookService.module';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { BookServiceModule } from './modules/bookService/bookService.module';
     CategoryModule,
     ServiceModule,
     FavoriteModule,
-    BookServiceModule
+    BookServiceModule,
+    MediaModule,
   ],
 })
 export class AppModule {}
