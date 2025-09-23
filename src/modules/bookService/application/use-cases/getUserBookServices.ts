@@ -89,7 +89,7 @@ export class GetUserBookServicesUseCase {
       });
 
       // Separar las reservas en dos arrays
-      const myBookings = mappedBookings.filter(booking => booking.bookingType === userId);
+      const myBookings = mappedBookings.filter(booking => booking.userId === userId);
       const otherBookings = mappedBookings.filter(booking => booking.userId !== userId);
 
       // Función para ordenar: pendientes primero, luego por fecha de creación (más reciente primero)
