@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsDateString,
+  IsEnum,
 } from 'class-validator';
 
 export class CreateBookServiceDto {
@@ -33,4 +34,20 @@ export class CreateBookServiceDto {
   @IsString({ message: 'El número de celular debe ser un texto válido' })
   @IsNotEmpty({ message: 'El número de celular es obligatorio' })
   phoneNumber: string;
+}
+
+export enum BookServiceStatus {
+  pending = 'pending',
+  accepted = 'accepted',
+  rejected = 'rejected',
+  completed = 'completed',
+  cancelled = 'cancelled'
+}
+
+export class UpdateBookServiceStatusDto {
+  @IsEnum(BookServiceStatus, { 
+    message: 'El estado debe ser uno de los siguientes: pending, accepted, rejected, completed, cancelled' 
+  })
+  @IsNotEmpty({ message: 'El estado es obligatorio' })
+  status: BookServiceStatus;
 }

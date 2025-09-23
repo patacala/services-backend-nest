@@ -164,7 +164,6 @@ export class GetListServicesUseCase {
                     }
                 ]
             }));
-            console.log(formattedServices[0].media)
 
             return {
                 data: formattedServices,

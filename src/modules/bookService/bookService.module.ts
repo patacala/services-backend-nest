@@ -6,6 +6,7 @@ import { BookServiceRepository } from './domain/repositories/bookService.reposit
 import { CreateBookServiceUseCase } from './application/use-cases/createBookService';
 import { PrismaBookServiceRepository } from './infrastructure/repositories/prisma-bookService.repository';
 import { GetUserBookServicesUseCase } from './application/use-cases/getUserBookServices';
+import { UpdateBookServiceStatusUseCase } from './application/use-cases/updateStatusBookService';
 
 
 @Module({
@@ -20,7 +21,8 @@ import { GetUserBookServicesUseCase } from './application/use-cases/getUserBookS
       useClass: PrismaBookServiceRepository,
     },
     CreateBookServiceUseCase,
-    GetUserBookServicesUseCase
+    GetUserBookServicesUseCase,
+    UpdateBookServiceStatusUseCase
   ],
   exports: [BookServiceRepository],
 })
