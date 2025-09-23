@@ -28,6 +28,11 @@ export class GetListServicesUseCase {
             const where: Prisma.ServiceWhereInput = {};
             const orderBy: Prisma.ServiceOrderByWithRelationInput = { created_at: 'desc' };
 
+            // Excluir servicios del usuario que consulta
+            if (userId) {
+                where.user_id = { not: userId };
+            }
+
             if (query) {
                 where.OR = [
                     { title: { contains: query, mode: 'insensitive' } },
@@ -154,7 +159,7 @@ export class GetListServicesUseCase {
                 createdAt: service.created_at,
                 updatedAt: service.updated_at,
                 isFavorite: userId ? service.favorites.length > 0 : false,
-                media:[
+                media: service.coverMedia ? [
                     {
                         id: service.coverMedia.id,
                         url: service.coverMedia.public_url,
@@ -162,7 +167,7 @@ export class GetListServicesUseCase {
                         provider: service.coverMedia.provider,
                         created_at: service.coverMedia.created_at,
                     }
-                ]
+                ] : []
             }));
 
             return {
@@ -175,7 +180,6 @@ export class GetListServicesUseCase {
                 },
             };
         } catch (error) {
-            console.error('Error fetching user services:', error);
             throw new BadRequestException('Failed to fetch user services');
         }
     }
