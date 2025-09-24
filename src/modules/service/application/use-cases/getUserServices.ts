@@ -15,7 +15,6 @@ export class GetUserServicesUseCase {
           categories: {
             include: { category: true },
           },
-          coverMedia: true,
           user: {
             include: {
               profile: true,
@@ -33,7 +32,6 @@ export class GetUserServicesUseCase {
         price: service.base_price_cents,
         currency: service.currency,
         categories: service.categories.map((sc) => sc.category.id.toString()),
-        images: service.coverMedia ? [service.coverMedia.id] : [],
         provider: {
           id: service.user.id,
           name: service.user.profile?.name ?? '',
@@ -43,7 +41,7 @@ export class GetUserServicesUseCase {
         city: service.location_city,
         lat: service.lat,
         lon: service.lon,
-        media: service.coverMedia ? [
+        /* media: service.coverMedia ? [
           {
             id: service.coverMedia.id,
             url: service.coverMedia.public_url,
@@ -51,7 +49,7 @@ export class GetUserServicesUseCase {
             provider: service.coverMedia.provider,
             created_at: service.coverMedia.created_at,
           }
-        ] : [],
+        ] : [], */
         createdAt: service.created_at,
         updatedAt: service.updated_at,
       }));

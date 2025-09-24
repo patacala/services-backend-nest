@@ -49,7 +49,6 @@ export class UpdateServiceUseCase {
           categories: {
             include: { category: true },
           },
-          coverMedia: true,
         },
       });
 
@@ -62,15 +61,9 @@ export class UpdateServiceUseCase {
         location_city: updatedService.location_city,
         lat: updatedService.lat,
         lon: updatedService.lon,
-        cover_media_id: updatedService.cover_media_id,
         categories: updatedService.categories.map((sc) => ({
           id: sc.category.id.toString(),
         })),
-        coverMedia: updatedService.coverMedia
-          ? {
-              id: updatedService.coverMedia.id,
-            }
-          : null,
         created_at: updatedService.created_at,
         updated_at: updatedService.updated_at,
       };

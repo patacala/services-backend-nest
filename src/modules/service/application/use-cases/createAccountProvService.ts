@@ -35,8 +35,6 @@ export class CreateAccountProvServiceUseCase {
                 location_city: dto.city,
                 lat: dto.lat,
                 lon: dto.lon,
-                cover_media_id: dto.coverMediaId && dto.coverMediaId.trim() !== '' 
-                ? dto.coverMediaId : null,
                 categories: dto.categoryIds
                 ? {
                     create: dto.categoryIds.map((id) => ({
@@ -49,7 +47,6 @@ export class CreateAccountProvServiceUseCase {
                 categories: {
                 include: { category: true },
                 },
-                coverMedia: true,
             },
             });
 
@@ -78,16 +75,9 @@ export class CreateAccountProvServiceUseCase {
                 location_city: result.service.location_city,
                 lat: result.service.lat,
                 lon: result.service.lon,
-                cover_media_id: result.service.cover_media_id,
                 categories: result.service.categories.map((sc) => ({
                     id: sc.category.id.toString(),
                 })),
-                coverMedia: result.service.coverMedia
-                    ? {
-                        id: result.service.coverMedia.id,
-                        /* url: result.service.coverMedia.url, */
-                    }
-                    : null,
                 created_at: result.service.created_at,
             },
         };

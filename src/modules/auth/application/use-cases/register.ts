@@ -58,7 +58,6 @@ export class RegisterUserUseCase {
             location_country: null,
             lat: null,
             lon: null,
-            avatar_media_id: null,
             address: null
           }
         });
@@ -103,7 +102,6 @@ export class RegisterUserUseCase {
         bio: completeProfile.bio,
         lat: completeProfile.lat,
         lon: completeProfile.lon,
-        avatar_media_id: completeProfile.avatar_media_id,
         adress: completeProfile.address
       };
 

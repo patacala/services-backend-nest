@@ -111,9 +111,6 @@ model Profile {
   lon              Float?
   address          String?
 
-  avatar_media_id String?    @db.Uuid
-  avatar          MediaFile? @relation("ProfileAvatar", fields: [avatar_media_id], references: [id], onDelete: SetNull)
-
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 }
@@ -165,9 +162,6 @@ model Service {
   lat              Float?
   lon              Float?
 
-  cover_media_id String?    @db.Uuid
-  coverMedia     MediaFile? @relation("ServiceCover", fields: [cover_media_id], references: [id], onDelete: SetNull)
-
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
@@ -177,7 +171,6 @@ model Service {
   ratings    Rating[]
   favorites  Favorite[]
   bookings   BookService[]     @relation("ServiceBookings")
-  mediaLinks MediaLink[]       @relation("ServiceLinks")
 }
 
 model BookService {
@@ -228,31 +221,39 @@ model MediaFile {
   provider             MediaProvider
   provider_ref         String
   provider_playback_id String?
-  public_url           String?
   width                Int?
   height               Int?
   duration_seconds     Int?
-  created_at           DateTime      @default(now())
-
-  avatarOf  Profile[] @relation("ProfileAvatar")
-  coverOf   Service[] @relation("ServiceCover")
-  messageOf Message[] @relation("MessageMedia")
-
-  links MediaLink[]
+  created_at           DateTime       @default(now())
+  links                MediaLink[]
+  variants             MediaVariant[]
 
   @@unique([provider, provider_ref])
+}
+
+model MediaVariant {
+  id            String    @id @default(uuid()) @db.Uuid
+  media_file_id String    @db.Uuid
+  mediaFile     MediaFile @relation(fields: [media_file_id], references: [id], onDelete: Cascade)
+
+  name   String
+  url    String @unique
+  width  Int?
+  height Int?
+
+  created_at DateTime @default(now())
+
+  @@unique([media_file_id, name])
 }
 
 model MediaLink {
   media_id   String     @db.Uuid
   owner_type MediaOwner
   owner_id   String     @db.Uuid
-  service_id String?    @db.Uuid
   position   Int?       @default(0)
   created_at DateTime   @default(now())
 
-  media   MediaFile @relation(fields: [media_id], references: [id], onDelete: Cascade)
-  service Service?  @relation("ServiceLinks", fields: [service_id], references: [id], onDelete: Cascade)
+  media MediaFile @relation(fields: [media_id], references: [id], onDelete: Cascade)
 
   @@id([owner_type, owner_id, media_id])
 }
@@ -306,15 +307,11 @@ model ConversationParticipant {
 }
 
 model Message {
-  id              String  @id @default(uuid()) @db.Uuid
-  conversation_id String  @db.Uuid
-  sender_id       String  @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
+  conversation_id String   @db.Uuid
+  sender_id       String   @db.Uuid
   body            String?
-
-  media_id String?    @db.Uuid
-  media    MediaFile? @relation("MessageMedia", fields: [media_id], references: [id], onDelete: SetNull)
-
-  created_at DateTime @default(now())
+  created_at      DateTime @default(now())
 
   conversation Conversation     @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
   sender       User             @relation("messagesSent", fields: [sender_id], references: [id], onDelete: Cascade)

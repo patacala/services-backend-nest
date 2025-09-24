@@ -21,7 +21,7 @@ export class GetProfileUseCase {
         email: profile.email,
         phone: profile.phone,
         city: profile.location_city,
-        address: profile.address
+        address: profile.address,
       };
     } catch (error) {
       throw error;

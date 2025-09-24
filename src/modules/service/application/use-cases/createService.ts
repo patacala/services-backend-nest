@@ -24,8 +24,6 @@ export class CreateServiceUseCase {
           location_city: dto.city,
           lat: dto.lat,
           lon: dto.lon,
-          cover_media_id: dto.coverMediaId && dto.coverMediaId.trim() !== '' 
-          ? dto.coverMediaId:null,
           categories: dto.categoryIds
             ? {
                 create: dto.categoryIds.map((id) => ({
@@ -38,7 +36,6 @@ export class CreateServiceUseCase {
           categories: {
             include: { category: true },
           },
-          coverMedia: true,
         },
       });
 
@@ -52,16 +49,9 @@ export class CreateServiceUseCase {
         location_city: service.location_city,
         lat: service.lat,
         lon: service.lon,
-        cover_media_id: service.cover_media_id,
         categories: service.categories.map((sc) => ({
           id: sc.category.id.toString(),
         })),
-        coverMedia: service.coverMedia
-          ? {
-              id: service.coverMedia.id,
-              /* url: service.coverMedia.url, */
-            }
-          : null,
         created_at: service.created_at,
       };
     } catch (error) {

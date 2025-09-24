@@ -121,7 +121,6 @@ export class GetListServicesUseCase {
                     categories: {
                         include: { category: true },
                     },
-                    coverMedia: true,
                     user: {
                         include: {
                             profile: true,
@@ -146,7 +145,6 @@ export class GetListServicesUseCase {
                 price: service.base_price_cents,
                 currency: service.currency,
                 categories: service.categories.map((sc) => sc.category.id.toString()),
-                images: service.coverMedia ? [service.coverMedia.id] : [],
                 provider: {
                     id: service.user.id,
                     name: service.user.profile?.name ?? '',
@@ -159,7 +157,7 @@ export class GetListServicesUseCase {
                 createdAt: service.created_at,
                 updatedAt: service.updated_at,
                 isFavorite: userId ? service.favorites.length > 0 : false,
-                media: service.coverMedia ? [
+                /* media: service.coverMedia ? [
                     {
                         id: service.coverMedia.id,
                         url: service.coverMedia.public_url,
@@ -167,7 +165,7 @@ export class GetListServicesUseCase {
                         provider: service.coverMedia.provider,
                         created_at: service.coverMedia.created_at,
                     }
-                ] : []
+                ] : [] */
             }));
 
             return {

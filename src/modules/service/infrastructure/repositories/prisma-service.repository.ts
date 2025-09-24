@@ -20,7 +20,6 @@ export class PrismaServiceRepository implements ServiceRepository {
         location_city: data.location_city ?? null,
         lat: data.lat ?? null,
         lon: data.lon ?? null,
-        cover_media_id: data.cover_media_id ?? null,
         categories: data.categories
           ? {
               create: data.categories.map((categoryId) => ({
@@ -33,7 +32,6 @@ export class PrismaServiceRepository implements ServiceRepository {
         categories: {
           include: { category: true },
         },
-        coverMedia: true,
       },
     });
 
@@ -52,7 +50,6 @@ export class PrismaServiceRepository implements ServiceRepository {
         location_city: data.location_city,
         lat: data.lat,
         lon: data.lon,
-        cover_media_id: data.cover_media_id,
         categories: data.categories
           ? {
               deleteMany: {},
@@ -66,7 +63,6 @@ export class PrismaServiceRepository implements ServiceRepository {
         categories: {
           include: { category: true },
         },
-        coverMedia: true,
       },
     });
 
