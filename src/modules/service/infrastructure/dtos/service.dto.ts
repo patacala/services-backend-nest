@@ -66,17 +66,11 @@ export class CreateServiceDto {
   @Max(180, { message: 'La longitud máxima es 180' })
   lon?: number;
 
-  /* @IsNotEmpty({ message: 'Cover media ID is required' })
-  @IsString({ message: 'Cover media ID must be a string' }) */
-  coverMediaId: string;
-
-  @IsOptional()
   @IsArray({ message: 'Las categorías deben enviarse en un arreglo' })
   @ArrayNotEmpty({ message: 'Debes seleccionar al menos una categoría' })
   @IsString({ each: true, message: 'Cada categoría debe ser un string válido' })
   categoryIds?: string[];
 
-  @IsOptional()
   @IsArray({ message: 'Los medios deben enviarse en un array' })
   @ValidateNested({ each: true })
   @Type(() => MediaDto)

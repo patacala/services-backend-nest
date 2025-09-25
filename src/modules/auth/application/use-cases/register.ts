@@ -7,12 +7,12 @@ import { RegisterDto } from '../../infrastructure/dtos/register.dto';
 export class RegisterUserUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute(data: RegisterDto & { userId: string }): Promise<{ message: string; profile: any, user: any }> {
+  async execute(data: RegisterDto & { userId: string }): Promise<{ message: string; profile: any; user: any }> {
     const { userId, name, email, phone, city, selectedCategories } = data;
-  
+
     // Validar que el usuario existe
     const userExists = await this.prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!userExists) {
@@ -21,7 +21,7 @@ export class RegisterUserUseCase {
 
     // Validar que no existe ya un perfil para este usuario
     const existingProfile = await this.prisma.profile.findUnique({
-      where: { user_id: userId }
+      where: { user_id: userId },
     });
 
     if (existingProfile) {
@@ -33,9 +33,9 @@ export class RegisterUserUseCase {
       const validCategories = await this.prisma.category.findMany({
         where: {
           id: {
-            in: selectedCategories.map(id => BigInt(id))
-          }
-        }
+            in: selectedCategories.map((id) => BigInt(id)),
+          },
+        },
       });
 
       if (validCategories.length !== selectedCategories.length) {
@@ -58,19 +58,20 @@ export class RegisterUserUseCase {
             location_country: null,
             lat: null,
             lon: null,
-            address: null
-          }
+            address: null,
+            media_link_id: null, // Campo opcional para la imagen
+          },
         });
 
         // 2. Crear relaciones con categorías si existen
         if (selectedCategories && selectedCategories.length > 0) {
-          const userCategories = selectedCategories.map(categoryId => ({
+          const userCategories = selectedCategories.map((categoryId) => ({
             userId,
-            categoryId: BigInt(categoryId)
+            categoryId: BigInt(categoryId),
           }));
 
           await tx.userCategory.createMany({
-            data: userCategories
+            data: userCategories,
           });
         }
 
@@ -86,9 +87,9 @@ export class RegisterUserUseCase {
               id: true,
               email: true,
               displayName: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
       // Transformar la respuesta
@@ -102,7 +103,7 @@ export class RegisterUserUseCase {
         bio: completeProfile.bio,
         lat: completeProfile.lat,
         lon: completeProfile.lon,
-        adress: completeProfile.address
+        address: completeProfile.address,
       };
 
       type UserWithNewStatus = PrismaUser & {
@@ -110,24 +111,23 @@ export class RegisterUserUseCase {
       };
 
       const userWithNewStatus: UserWithNewStatus = {
-          ...userExists,
-          isNewUser: false
+        ...userExists,
+        isNewUser: false,
       };
 
       return {
         message: 'Profile completed',
         profile: transformedProfile,
-        user: userWithNewStatus
+        user: userWithNewStatus,
       };
-
     } catch (error) {
       console.error('Error completing profile:', error);
-      
+
       // Si es un error de validación de Prisma
       if (error.code === 'P2002') {
         throw new BadRequestException('Profile already exists or duplicate constraint violation');
       }
-      
+
       // Si es un error de foreign key
       if (error.code === 'P2003') {
         throw new BadRequestException('Invalid user ID or category ID provided');

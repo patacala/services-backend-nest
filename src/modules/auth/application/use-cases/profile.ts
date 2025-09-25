@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 
 @Injectable()
@@ -9,32 +9,32 @@ export class GetProfileUseCase {
     try {
       const profile = await this.prisma.profile.findUnique({
         where: { user_id: userId },
-      });
-
-      if (!profile) {
-        throw new UnauthorizedException(`Perfil con ID ${userId} no encontrado.`);
-      }
-
-      const mediaLinks = await this.prisma.mediaLink.findMany({
-        where: {
-          owner_type: 'profile',
-          owner_id: userId,
-        },
         include: {
-          media: {
-            include: { variants: true },
+          media_link: {
+            include: {
+              files: true,
+            },
           },
         },
       });
 
-      const media = mediaLinks.map((link) => ({
-        id: link.media.id,
-        providerRef: link.media.provider_ref,
-        variants: link.media.variants.map((variant) => ({
-          name: variant.name,
-          url: variant.url,
-        })),
-      }));
+      if (!profile) {
+        throw new NotFoundException(`Perfil con ID de usuario ${userId} no encontrado.`);
+      }
+      
+      let media = null;
+      if (profile.media_link && profile.media_link.files.length > 0) {
+        const providerRef = profile.media_link.files[0]?.provider_ref || null;
+
+        media = [{
+          id: profile.media_link.media_id,
+          providerRef,
+          variants: profile.media_link.files.map((file) => ({
+            name: file.type_variant,
+            url: file.url,
+          })),
+        }];
+      }
 
       return {
         profile_id: profile.user_id,

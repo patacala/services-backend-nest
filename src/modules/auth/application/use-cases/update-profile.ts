@@ -1,103 +1,85 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 import { UpdateProfileDto } from '../../infrastructure/dtos/update-profile.dto';
+import { MediaVariant } from '@prisma/client';
 
 @Injectable()
 export class UpdateProfileUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
+  private getVariantFromUrl(url: string): MediaVariant {
+    const segments = url.split('/');
+    const lastSegment = segments.pop() || '';
+
+    if (Object.values(MediaVariant).includes(lastSegment as MediaVariant)) {
+      return lastSegment as MediaVariant;
+    }
+    
+    return MediaVariant.public;
+  }
+
   async execute(userId: string, dto: UpdateProfileDto) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!profile) {
+      throw new NotFoundException(`Perfil con ID de usuario ${userId} no encontrado.`);
+    }
+
     try {
-      const profile = await this.prisma.profile.findUnique({
-        where: { user_id: userId },
-      });
+      const result = await this.prisma.$transaction(async (tx) => {
+        const profileDataToUpdate = {
+          name: dto.name,
+          location_city: dto.city,
+          address: dto.address,
+        };
 
-      if (!profile) {
-        throw new NotFoundException(`Perfil con ID ${userId} no encontrado.`);
-      }
-
-      if (dto.media) {
-        await this.prisma.$transaction(async (tx) => {
-          // 1. Eliminar media anterior
-          const oldLinks = await tx.mediaLink.findMany({
-            where: { owner_type: 'profile', owner_id: userId },
-            include: { media: true },
+        if (!dto.media) {
+          return tx.profile.update({
+            where: { user_id: userId },
+            data: profileDataToUpdate,
           });
+        }
 
-          for (const link of oldLinks) {
-            // 1. Borrar variantes
-            await tx.mediaVariant.deleteMany({
-              where: { media_file_id: link.media_id },
-            });
-
-            // 2. Borrar link
-            await tx.mediaLink.delete({
-              where: {
-                owner_type_owner_id_media_id: {
-                  owner_type: 'profile',
-                  owner_id: userId,
-                  media_id: link.media_id,
-                },
-              },
-            });
-
-            // 3. Borrar archivo
-            await tx.mediaFile.delete({
-              where: { id: link.media_id },
-            });
-          }
-
-          // 2. Crear nuevo MediaFile
-          const newMedia = await tx.mediaFile.create({
-            data: {
-              uploaded_by: userId,
-              kind: 'image',
-              provider: 'cloudflare_images',
-              provider_ref: dto.media.id,
-            },
+        if (profile.media_link_id) {
+          await tx.mediaLink.delete({
+            where: { media_id: profile.media_link_id },
           });
+        }
 
-          // 3. Crear variantes
-          await tx.mediaVariant.createMany({
-            data: dto.media.variants.map((url: string) => {
-              const parts = url.split('/');
-              const lastSegment = parts[parts.length - 1];
-              const variantName = lastSegment.includes('-') ? lastSegment : lastSegment;
-
-              return {
-                media_file_id: newMedia.id,
-                name: variantName,
-                url,
-              };
-            }),
-          });
-
-          // 4. Crear MediaLink
-          await tx.mediaLink.create({
-            data: {
-              media_id: newMedia.id,
-              owner_type: 'profile',
-              owner_id: userId,
-              position: 0,
-            },
-          });
+        const newMediaLink = await tx.mediaLink.create({
+          data: {
+            owner_type: 'profile',
+            owner_id: userId,
+          },
         });
-      }
 
-      // Actualizar datos básicos del perfil
-      await this.prisma.profile.update({
-        where: { user_id: userId },
-        data: {
-          ...(dto.name && { name: dto.name }),
-          ...(dto.city && { location_city: dto.city }),
-          ...(dto.address && { address: dto.address }),
-        },
+        await tx.mediaFile.createMany({
+          data: dto.media.variants.map((variantUrl: string) => ({
+            link_id: newMediaLink.media_id,
+            uploaded_by: userId,
+            kind: 'image',
+            provider: 'cloudflare_images',
+            provider_ref: dto.media.id,
+            type_variant: this.getVariantFromUrl(variantUrl),
+            url: variantUrl
+          })),
+        });
+
+        return tx.profile.update({
+          where: { user_id: userId },
+          data: {
+            ...profileDataToUpdate,
+            media_link_id: newMediaLink.media_id,
+          },
+        });
       });
 
-      return { message: 'Profile updated successfully' };
+      return { message: 'Perfil actualizado exitosamente.', profile: result };
     } catch (error) {
       console.error('Error al actualizar el perfil:', error);
-      throw error;
+      throw new BadRequestException('No se pudo actualizar el perfil.');
     }
   }
 }

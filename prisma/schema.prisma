@@ -35,6 +35,13 @@ enum MediaProvider {
   mux
 }
 
+enum MediaVariant {
+  thumbnail
+  profileThumbnail
+  cover
+  public
+}
+
 enum MediaOwner {
   service
   comment
@@ -111,6 +118,9 @@ model Profile {
   lon              Float?
   address          String?
 
+  media_link_id    String?    @unique @db.Uuid
+  media_link       MediaLink? @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
+
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 }
@@ -161,6 +171,8 @@ model Service {
   location_city    String?
   lat              Float?
   lon              Float?
+  media_link_id    String?    @unique @db.Uuid
+  media_link       MediaLink? @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
 
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
@@ -212,50 +224,38 @@ model ServiceTag {
   @@id([service_id, tag_id])
 }
 
-model MediaFile {
-  id          String @id @default(uuid()) @db.Uuid
-  uploaded_by String @db.Uuid
-  uploader    User   @relation("UserUploads", fields: [uploaded_by], references: [id], onDelete: Cascade)
-
-  kind                 MediaKind
-  provider             MediaProvider
-  provider_ref         String
-  provider_playback_id String?
-  width                Int?
-  height               Int?
-  duration_seconds     Int?
-  created_at           DateTime       @default(now())
-  links                MediaLink[]
-  variants             MediaVariant[]
-
-  @@unique([provider, provider_ref])
-}
-
-model MediaVariant {
-  id            String    @id @default(uuid()) @db.Uuid
-  media_file_id String    @db.Uuid
-  mediaFile     MediaFile @relation(fields: [media_file_id], references: [id], onDelete: Cascade)
-
-  name   String
-  url    String @unique
-  width  Int?
-  height Int?
-
-  created_at DateTime @default(now())
-
-  @@unique([media_file_id, name])
-}
-
 model MediaLink {
-  media_id   String     @default(uuid()) @db.Uuid
+  media_id   String     @id @default(uuid()) @db.Uuid
   owner_type MediaOwner
   owner_id   String     @db.Uuid
   position   Int?       @default(0)
   created_at DateTime   @default(now())
 
-  media MediaFile @relation(fields: [media_id], references: [id], onDelete: Cascade)
+  profile Profile?
+  service Service?
 
-  @@id([owner_type, owner_id, media_id])
+  files MediaFile[] @relation("LinkFiles")
+}
+
+model MediaFile {
+  id          String     @id @default(uuid()) @db.Uuid
+  link_id     String?    @db.Uuid
+  link        MediaLink? @relation("LinkFiles", fields: [link_id], references: [media_id], onDelete: Cascade)
+  uploaded_by String     @db.Uuid
+  uploader    User       @relation("UserUploads", fields: [uploaded_by], references: [id], onDelete: Cascade)
+
+  kind                 MediaKind
+  provider             MediaProvider
+  provider_ref         String
+  type_variant         MediaVariant
+  url                  String
+  provider_playback_id String?
+  width                Int?
+  height               Int?
+  duration_seconds     Int?
+  created_at           DateTime      @default(now())
+
+  @@unique([provider, provider_ref, type_variant])
 }
 
 model Comment {
