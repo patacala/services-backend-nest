@@ -247,7 +247,7 @@ model MediaVariant {
 }
 
 model MediaLink {
-  media_id   String     @db.Uuid
+  media_id   String     @default(uuid()) @db.Uuid
   owner_type MediaOwner
   owner_id   String     @db.Uuid
   position   Int?       @default(0)
