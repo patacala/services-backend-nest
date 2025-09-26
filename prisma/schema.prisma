@@ -35,6 +35,13 @@ enum MediaProvider {
   mux
 }
 
+enum MediaVariant {
+  thumbnail
+  profileThumbnail
+  cover
+  public
+}
+
 enum MediaOwner {
   service
   comment
@@ -111,8 +118,8 @@ model Profile {
   lon              Float?
   address          String?
 
-  avatar_media_id String?    @db.Uuid
-  avatar          MediaFile? @relation("ProfileAvatar", fields: [avatar_media_id], references: [id], onDelete: SetNull)
+  media_link_id    String?    @unique @db.Uuid
+  media_link       MediaLink? @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
 
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
@@ -164,9 +171,8 @@ model Service {
   location_city    String?
   lat              Float?
   lon              Float?
-
-  cover_media_id String?    @db.Uuid
-  coverMedia     MediaFile? @relation("ServiceCover", fields: [cover_media_id], references: [id], onDelete: SetNull)
+  media_link_id    String?    @unique @db.Uuid
+  media_link       MediaLink? @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
 
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
@@ -177,7 +183,6 @@ model Service {
   ratings    Rating[]
   favorites  Favorite[]
   bookings   BookService[]     @relation("ServiceBookings")
-  mediaLinks MediaLink[]       @relation("ServiceLinks")
 }
 
 model BookService {
@@ -219,42 +224,38 @@ model ServiceTag {
   @@id([service_id, tag_id])
 }
 
+model MediaLink {
+  media_id   String     @id @default(uuid()) @db.Uuid
+  owner_type MediaOwner
+  owner_id   String     @db.Uuid
+  position   Int?       @default(0)
+  created_at DateTime   @default(now())
+
+  profile Profile?
+  service Service?
+
+  files MediaFile[] @relation("LinkFiles")
+}
+
 model MediaFile {
-  id          String @id @default(uuid()) @db.Uuid
-  uploaded_by String @db.Uuid
-  uploader    User   @relation("UserUploads", fields: [uploaded_by], references: [id], onDelete: Cascade)
+  id          String     @id @default(uuid()) @db.Uuid
+  link_id     String?    @db.Uuid
+  link        MediaLink? @relation("LinkFiles", fields: [link_id], references: [media_id], onDelete: Cascade)
+  uploaded_by String     @db.Uuid
+  uploader    User       @relation("UserUploads", fields: [uploaded_by], references: [id], onDelete: Cascade)
 
   kind                 MediaKind
   provider             MediaProvider
   provider_ref         String
+  type_variant         MediaVariant
+  url                  String
   provider_playback_id String?
-  public_url           String?
   width                Int?
   height               Int?
   duration_seconds     Int?
   created_at           DateTime      @default(now())
 
-  avatarOf  Profile[] @relation("ProfileAvatar")
-  coverOf   Service[] @relation("ServiceCover")
-  messageOf Message[] @relation("MessageMedia")
-
-  links MediaLink[]
-
-  @@unique([provider, provider_ref])
-}
-
-model MediaLink {
-  media_id   String     @db.Uuid
-  owner_type MediaOwner
-  owner_id   String     @db.Uuid
-  service_id String?    @db.Uuid
-  position   Int?       @default(0)
-  created_at DateTime   @default(now())
-
-  media   MediaFile @relation(fields: [media_id], references: [id], onDelete: Cascade)
-  service Service?  @relation("ServiceLinks", fields: [service_id], references: [id], onDelete: Cascade)
-
-  @@id([owner_type, owner_id, media_id])
+  @@unique([provider, provider_ref, type_variant])
 }
 
 model Comment {
@@ -306,15 +307,11 @@ model ConversationParticipant {
 }
 
 model Message {
-  id              String  @id @default(uuid()) @db.Uuid
-  conversation_id String  @db.Uuid
-  sender_id       String  @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
+  conversation_id String   @db.Uuid
+  sender_id       String   @db.Uuid
   body            String?
-
-  media_id String?    @db.Uuid
-  media    MediaFile? @relation("MessageMedia", fields: [media_id], references: [id], onDelete: SetNull)
-
-  created_at DateTime @default(now())
+  created_at      DateTime @default(now())
 
   conversation Conversation     @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
   sender       User             @relation("messagesSent", fields: [sender_id], references: [id], onDelete: Cascade)

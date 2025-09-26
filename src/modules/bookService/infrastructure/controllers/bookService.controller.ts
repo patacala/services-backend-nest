@@ -5,18 +5,22 @@ import {
   UseGuards,
   Req,
   Get,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
-import { CreateBookServiceDto } from '../dtos/bookService.dto';
+import { CreateBookServiceDto, UpdateBookServiceStatusDto } from '../dtos/bookService.dto';
 import { CreateBookServiceUseCase } from '../../application/use-cases/createBookService';
 import { GetUserBookServicesUseCase } from '../../application/use-cases/getUserBookServices';
+import { UpdateBookServiceStatusUseCase } from '../../application/use-cases/updateStatusBookService';
 
 @UseGuards(JwtAuthGuard)
 @Controller('book-services')
 export class BookServiceController {
   constructor(
     private readonly createBookServiceUC: CreateBookServiceUseCase,
-    private readonly getUserBookServicesUC: GetUserBookServicesUseCase
+    private readonly getUserBookServicesUC: GetUserBookServicesUseCase,
+    private readonly updateBookServiceStatusUC: UpdateBookServiceStatusUseCase
   ) {}
 
   @Post()
@@ -29,5 +33,15 @@ export class BookServiceController {
   async getUserBookings(@Req() req) {
     const userId = req.user.id;
     return this.getUserBookServicesUC.execute(userId);
+  }
+  
+  @Patch(':id/status')
+  async updateBookingStatus(
+    @Req() req,
+    @Param('id') bookingId: string,
+    @Body() dto: UpdateBookServiceStatusDto
+  ) {
+    const userId = req.user.id;
+    return this.updateBookServiceStatusUC.execute(userId, bookingId, dto);
   }
 }

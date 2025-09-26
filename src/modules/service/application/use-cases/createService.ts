@@ -1,72 +1,111 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 import { CreateServiceDto } from '../../infrastructure/dtos/service.dto';
-
+import { MediaVariant } from '@prisma/client';
 
 @Injectable()
 export class CreateServiceUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
+  private getVariantFromUrl(url: string): MediaVariant {
+    const segments = url.split('/');
+    const lastSegment = segments.pop() || '';
+
+    if (Object.values(MediaVariant).includes(lastSegment as MediaVariant)) {
+      return lastSegment as MediaVariant;
+    }
+
+    return MediaVariant.public;
+  }
+
   async execute(userId: string, dto: CreateServiceDto) {
     try {
-      if (!dto.title || !dto.description) {
-        throw new BadRequestException('Title and description are required');
-      }
+      const result = await this.prisma.$transaction(async (tx) => {
+          const service = await tx.service.create({
+              data: {
+                  user_id: userId,
+                  title: dto.title,
+                  description: dto.description,
+                  base_price_cents: dto.price,
+                  currency: dto.currency ?? 'USD',
+                  location_city: dto.city,
+                  lat: dto.lat,
+                  lon: dto.lon,
+                  categories: dto.categoryIds
+                      ? {
+                          create: dto.categoryIds.map((id) => ({
+                              category_id: BigInt(id),
+                          })),
+                      }
+                      : undefined,
+                  media_link_id: null
+              },
+              include: {
+                  categories: {
+                      include: { category: true },
+                  },
+              },
+          });
 
-      // Crear el servicio
-      const service = await this.prisma.service.create({
-        data: {
-          user_id: userId,
-          title: dto.title,
-          description: dto.description,
-          base_price_cents: dto.price,
-          currency: dto.currency ?? 'USD',
-          location_city: dto.city,
-          lat: dto.lat,
-          lon: dto.lon,
-          cover_media_id: dto.coverMediaId && dto.coverMediaId.trim() !== '' 
-          ? dto.coverMediaId:null,
-          categories: dto.categoryIds
-            ? {
-                create: dto.categoryIds.map((id) => ({
-                  category_id: BigInt(id),
-                })),
+          let mediaLinkId: string | null = null;
+          if (dto.media && dto.media.length > 0) {
+              const newMediaLink = await tx.mediaLink.create({
+                  data: {
+                      owner_type: 'service',
+                      owner_id: service.id,
+                  },
+              });
+
+              mediaLinkId = newMediaLink.media_id;
+              const mediaFilesToCreate = [];
+              
+              for (const mediaItem of dto.media) {
+                  for (const variant of mediaItem.variants) {
+                      mediaFilesToCreate.push({
+                          link_id: newMediaLink.media_id,
+                          uploaded_by: userId,
+                          kind: 'image',
+                          provider: 'cloudflare_images',
+                          provider_ref: mediaItem.id,
+                          type_variant: this.getVariantFromUrl(variant),
+                          url: variant                                 
+                      });
+                  }
               }
-            : undefined,
-        },
-        include: {
-          categories: {
-            include: { category: true },
-          },
-          coverMedia: true,
-        },
+
+              await tx.mediaFile.createMany({
+                  data: mediaFilesToCreate,
+              });
+
+              await tx.service.update({
+                  where: { id: service.id },
+                  data: { media_link_id: mediaLinkId },
+              });
+          }
+
+          return { service };
       });
 
-      // Transformar BigInt a string
       return {
-        id: service.id,
-        title: service.title,
-        description: service.description,
-        base_price_cents: service.base_price_cents,
-        currency: service.currency,
-        location_city: service.location_city,
-        lat: service.lat,
-        lon: service.lon,
-        cover_media_id: service.cover_media_id,
-        categories: service.categories.map((sc) => ({
-          id: sc.category.id.toString(),
+        id: result.service.id,
+        title: result.service.title,
+        description: result.service.description,
+        base_price_cents: result.service.base_price_cents,
+        currency: result.service.currency,
+        location_city: result.service.location_city,
+        lat: result.service.lat,
+        lon: result.service.lon,
+        categories: result.service.categories.map((sc) => ({
+            id: sc.category.id.toString(),
         })),
-        coverMedia: service.coverMedia
-          ? {
-              id: service.coverMedia.id,
-              /* url: service.coverMedia.url, */
-            }
-          : null,
-        created_at: service.created_at,
+        created_at: result.service.created_at,
       };
     } catch (error) {
-      console.error('Error creating service:', error);
-      throw new BadRequestException('Failed to create service');
+        if (error instanceof BadRequestException) {
+            throw error;
+        }
+        
+        throw new BadRequestException('Failed to create account provider service');
     }
   }
 }

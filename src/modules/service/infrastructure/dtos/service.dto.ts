@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -8,8 +9,28 @@ import {
   Matches,
   IsArray,
   ArrayNotEmpty,
-  IsDateString,
+  ValidateNested,
 } from 'class-validator';
+
+class MediaVariantDto {
+  @IsString({ message: 'El nombre de la variante debe ser un texto válido' })
+  name: string;
+
+  @IsString({ message: 'La URL de la variante debe ser un texto válido' })
+  url: string;
+}
+
+class MediaDto {
+  @IsString()
+  filename: string;
+
+  @IsString()
+  id: string;
+
+  @IsArray()
+  @IsString({ each: true, message: 'Cada variante debe ser una URL de texto válida' })
+  variants: string[];
+}
 
 export class CreateServiceDto {
   @IsString({ message: 'El título debe ser un texto válido' })
@@ -47,15 +68,15 @@ export class CreateServiceDto {
   @Max(180, { message: 'La longitud máxima es 180' })
   lon?: number;
 
-  /* @IsNotEmpty({ message: 'Cover media ID is required' })
-  @IsString({ message: 'Cover media ID must be a string' }) */
-  coverMediaId: string;
-
-  @IsOptional()
   @IsArray({ message: 'Las categorías deben enviarse en un arreglo' })
   @ArrayNotEmpty({ message: 'Debes seleccionar al menos una categoría' })
   @IsString({ each: true, message: 'Cada categoría debe ser un string válido' })
   categoryIds?: string[];
+
+  @IsArray({ message: 'Los medios deben enviarse en un array' })
+  @ValidateNested({ each: true })
+  @Type(() => MediaDto)
+  media?: MediaDto[];
 }
 
 export class UpdateServiceDto {

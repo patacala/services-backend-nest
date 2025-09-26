@@ -1,4 +1,17 @@
-import { IsOptional, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
+
+class MediaDto {
+  @IsString()
+  filename: string;
+
+  @IsString()
+  id: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  variants: string[];
+}
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -20,6 +33,7 @@ export class UpdateProfileDto {
   address?: string;
 
   @IsOptional()
-  @IsString()
-  avatar?: string;
+  @ValidateNested()
+  @Type(() => MediaDto)
+  media?: MediaDto;
 }
