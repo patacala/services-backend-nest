@@ -15,6 +15,14 @@ interface ListServicesParams {
   limit?: string;
 }
 
+type MediaImage = {
+  id: string;
+  variants: {
+    name: string;
+    url: string;
+  }[];
+};
+
 @Injectable()
 export class GetListServicesUseCase {
   constructor(private readonly prisma: PrismaService) {}
@@ -112,17 +120,27 @@ export class GetListServicesUseCase {
       });
 
       const formattedServices = services.map((service) => {
-        let media = null;
+        let media: MediaImage[] = [];
         if (service.media_link && service.media_link.files.length > 0) {
-          const providerRef = service.media_link.files[0]?.provider_ref || null;
-          media = {
-            id: service.media_link.media_id,
-            providerRef,
-            variants: service.media_link.files.map((file) => ({
+          const imagesMap = new Map<string, MediaImage>();
+
+          for (const file of service.media_link.files) {
+            const providerRef = file.provider_ref;
+            const variant = {
               name: file.type_variant,
               url: file.url,
-            })),
-          };
+            };
+
+            if (!imagesMap.has(providerRef)) {
+              imagesMap.set(providerRef, {
+                id: providerRef,
+                variants: [variant],
+              });
+            } else {
+              imagesMap.get(providerRef)?.variants.push(variant);
+            }
+          }
+          media = Array.from(imagesMap.values());
         }
 
         return {
@@ -160,7 +178,6 @@ export class GetListServicesUseCase {
         },
       };
     } catch (error) {
-      console.error('Failed to fetch services:', error);
       throw new BadRequestException('Failed to fetch services');
     }
   }

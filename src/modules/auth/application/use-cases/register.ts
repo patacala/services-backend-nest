@@ -59,7 +59,7 @@ export class RegisterUserUseCase {
             lat: null,
             lon: null,
             address: null,
-            media_link_id: null, // Campo opcional para la imagen
+            media_link_id: null,
           },
         });
 

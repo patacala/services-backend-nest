@@ -21,13 +21,15 @@ class MediaVariantDto {
 }
 
 class MediaDto {
-  @IsString({ message: 'El providerRef debe ser un texto válido' })
-  providerRef: string;
+  @IsString()
+  filename: string;
 
-  @IsArray({ message: 'Las variantes deben enviarse en un arreglo' })
-  @ValidateNested({ each: true })
-  @Type(() => MediaVariantDto)
-  variants: MediaVariantDto[];
+  @IsString()
+  id: string;
+
+  @IsArray()
+  @IsString({ each: true, message: 'Cada variante debe ser una URL de texto válida' })
+  variants: string[];
 }
 
 export class CreateServiceDto {

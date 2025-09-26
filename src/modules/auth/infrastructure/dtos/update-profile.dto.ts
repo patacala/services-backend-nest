@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsISO8601, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
 
 class MediaDto {
   @IsString()

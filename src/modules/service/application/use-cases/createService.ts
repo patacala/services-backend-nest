@@ -21,88 +21,91 @@ export class CreateServiceUseCase {
   async execute(userId: string, dto: CreateServiceDto) {
     try {
       const result = await this.prisma.$transaction(async (tx) => {
-        const service = await tx.service.create({
-          data: {
-            user_id: userId,
-            title: dto.title,
-            description: dto.description,
-            base_price_cents: dto.price ? Math.round(dto.price * 100) : null,
-            currency: dto.currency ?? 'USD',
-            location_city: dto.city,
-            lat: dto.lat,
-            lon: dto.lon,
-            categories: {
-              create: dto.categoryIds?.map((id) => ({
-                category_id: BigInt(id),
-              })),
-            },
-          },
-          include: {
-            categories: { include: { category: true } },
-          },
-        });
+          const service = await tx.service.create({
+              data: {
+                  user_id: userId,
+                  title: dto.title,
+                  description: dto.description,
+                  base_price_cents: dto.price,
+                  currency: dto.currency ?? 'USD',
+                  location_city: dto.city,
+                  lat: dto.lat,
+                  lon: dto.lon,
+                  categories: dto.categoryIds
+                      ? {
+                          create: dto.categoryIds.map((id) => ({
+                              category_id: BigInt(id),
+                          })),
+                      }
+                      : undefined,
+                  media_link_id: null
+              },
+              include: {
+                  categories: {
+                      include: { category: true },
+                  },
+              },
+          });
 
-        const mediaLink = await tx.mediaLink.create({
-          data: {
-            owner_type: 'service',
-            owner_id: service.id,
-          },
-        });
+          let mediaLinkId: string | null = null;
+          if (dto.media && dto.media.length > 0) {
+              const newMediaLink = await tx.mediaLink.create({
+                  data: {
+                      owner_type: 'service',
+                      owner_id: service.id,
+                  },
+              });
 
-        await tx.service.update({
-          where: { id: service.id },
-          data: { media_link_id: mediaLink.media_id },
-        });
+              mediaLinkId = newMediaLink.media_id;
+              const mediaFilesToCreate = [];
+              
+              for (const mediaItem of dto.media) {
+                  for (const variant of mediaItem.variants) {
+                      mediaFilesToCreate.push({
+                          link_id: newMediaLink.media_id,
+                          uploaded_by: userId,
+                          kind: 'image',
+                          provider: 'cloudflare_images',
+                          provider_ref: mediaItem.id,
+                          type_variant: this.getVariantFromUrl(variant),
+                          url: variant                                 
+                      });
+                  }
+              }
 
-        const mediaFilesCreationPromises = dto.media.flatMap(m =>
-            m.variants.map(variant => {
-                return tx.mediaFile.create({
-                    data: {
-                        link_id: mediaLink.media_id,
-                        uploaded_by: userId,
-                        kind: 'image',
-                        provider: 'cloudflare_images',
-                        provider_ref: m.providerRef,
-                        type_variant: this.getVariantFromUrl(variant.url),
-                        url: variant.url,
-                    },
-                });
-            })
-        );
-        
-        const createdMediaFiles = await Promise.all(mediaFilesCreationPromises);
+              await tx.mediaFile.createMany({
+                  data: mediaFilesToCreate,
+              });
 
-        const media = {
-          id: mediaLink.media_id,
-          files: createdMediaFiles.map(file => ({
-            id: file.id,
-            url: file.url,
-            variant: file.type_variant,
-          })),
-        };
+              await tx.service.update({
+                  where: { id: service.id },
+                  data: { media_link_id: mediaLinkId },
+              });
+          }
 
-        return {
-          id: service.id,
-          title: service.title,
-          description: service.description,
-          base_price_cents: service.base_price_cents,
-          currency: service.currency,
-          location_city: service.location_city,
-          lat: service.lat,
-          lon: service.lon,
-          categories: service.categories.map((sc) => ({
-            id: sc.category.id.toString(),
-            name: sc.category.name_es, 
-          })),
-          media,
-          created_at: service.created_at,
-        };
+          return { service };
       });
 
-      return result;
+      return {
+        id: result.service.id,
+        title: result.service.title,
+        description: result.service.description,
+        base_price_cents: result.service.base_price_cents,
+        currency: result.service.currency,
+        location_city: result.service.location_city,
+        lat: result.service.lat,
+        lon: result.service.lon,
+        categories: result.service.categories.map((sc) => ({
+            id: sc.category.id.toString(),
+        })),
+        created_at: result.service.created_at,
+      };
     } catch (error) {
-      console.error('Error creating service with media:', error);
-      throw new BadRequestException('Failed to create service with media');
+        if (error instanceof BadRequestException) {
+            throw error;
+        }
+        
+        throw new BadRequestException('Failed to create account provider service');
     }
   }
 }
