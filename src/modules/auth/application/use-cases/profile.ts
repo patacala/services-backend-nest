@@ -26,13 +26,15 @@ export class GetProfileUseCase {
       if (profile.media_link && profile.media_link.files.length > 0) {
         const providerRef = profile.media_link.files[0]?.provider_ref || null;
 
+        const variants = profile.media_link.files.reduce((acc, file) => {
+          acc[file.type_variant] = { url: file.url };
+          return acc;
+        }, {} as Record<string, { url: string }>);
+
         media = [{
           id: profile.media_link.media_id,
           providerRef,
-          variants: profile.media_link.files.map((file) => ({
-            name: file.type_variant,
-            url: file.url,
-          })),
+          variants,
         }];
       }
 

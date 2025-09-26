@@ -17,10 +17,10 @@ interface ListServicesParams {
 
 type MediaImage = {
   id: string;
+  providerRef: string;
   variants: {
-    name: string;
-    url: string;
-  }[];
+    [key: string]: { url: string };
+  };
 };
 
 @Injectable()
@@ -106,7 +106,23 @@ export class GetListServicesUseCase {
         where,
         include: {
           categories: { select: { category_id: true } },
-          user: { select: { id: true, profile: { select: { name: true } } } },
+          user: {
+            select: {
+              id: true,
+              profile: {
+                select: {
+                  name: true,
+                  media_link: {
+                    include: {
+                      files: {
+                        where: { type_variant: 'profileThumbnail' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
           favorites: userId ? { where: { user_id: userId } } : false,
           media_link: {
             include: {
@@ -122,26 +138,30 @@ export class GetListServicesUseCase {
       const formattedServices = services.map((service) => {
         let media: MediaImage[] = [];
         if (service.media_link && service.media_link.files.length > 0) {
-          const imagesMap = new Map<string, MediaImage>();
-
-          for (const file of service.media_link.files) {
-            const providerRef = file.provider_ref;
-            const variant = {
-              name: file.type_variant,
-              url: file.url,
-            };
-
-            if (!imagesMap.has(providerRef)) {
-              imagesMap.set(providerRef, {
-                id: providerRef,
-                variants: [variant],
-              });
-            } else {
-              imagesMap.get(providerRef)?.variants.push(variant);
+          const filesByProviderRef = service.media_link.files.reduce((acc, file) => {
+            const key = file.provider_ref;
+            if (!acc[key]) {
+              acc[key] = [];
             }
-          }
-          media = Array.from(imagesMap.values());
+            acc[key].push(file);
+            return acc;
+          }, {} as Record<string, typeof service.media_link.files>);
+
+          media = Object.entries(filesByProviderRef).map(([providerRef, files]) => {
+            const variants = files.reduce((acc, file) => {
+              acc[file.type_variant] = { url: file.url };
+              return acc;
+            }, {} as Record<string, { url: string }>);
+            
+            return {
+              id: service.media_link.media_id,
+              providerRef,
+              variants,
+            };
+          });
         }
+
+        const providerThumbnailUrl = service.user.profile?.media_link?.files?.[0]?.url || null;
 
         return {
           id: service.id,
@@ -153,6 +173,9 @@ export class GetListServicesUseCase {
           provider: {
             id: service.user.id,
             name: service.user.profile?.name ?? '',
+            media: providerThumbnailUrl
+              ? { profileThumbnail: { url: providerThumbnailUrl } }
+              : null,
           },
           rating: 0,
           reviewsCount: 0,
