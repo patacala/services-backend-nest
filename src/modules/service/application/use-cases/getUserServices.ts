@@ -1,12 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 
+// Tipo consistente con GetListServicesUseCase para las imágenes del servicio
 type MediaImage = {
   id: string;
+  providerRef: string;
   variants: {
-    name: string;
-    url: string;
-  }[];
+    [key:string]: { url: string };
+  };
 };
 
 @Injectable()
@@ -21,11 +22,20 @@ export class GetUserServicesUseCase {
         },
         include: {
           categories: {
-            include: { category: true },
+            select: {
+              category: {
+                select: { id: true },
+              },
+            },
           },
           user: {
-            include: {
-              profile: true,
+            select: {
+              id: true,
+              profile: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
           media_link: {
@@ -42,25 +52,27 @@ export class GetUserServicesUseCase {
       const servicesMapped = services.map((service) => {
         let media: MediaImage[] = [];
         if (service.media_link && service.media_link.files.length > 0) {
-          const imagesMap = new Map<string, MediaImage>();
-
-          for (const file of service.media_link.files) {
-            const providerRef = file.provider_ref;
-            const variant = {
-              name: file.type_variant,
-              url: file.url,
-            };
-
-            if (!imagesMap.has(providerRef)) {
-              imagesMap.set(providerRef, {
-                id: providerRef,
-                variants: [variant],
-              });
-            } else {
-              imagesMap.get(providerRef)?.variants.push(variant);
+          const filesByProviderRef = service.media_link.files.reduce((acc, file) => {
+            const key = file.provider_ref;
+            if (!acc[key]) {
+              acc[key] = [];
             }
-          }
-          media = Array.from(imagesMap.values());
+            acc[key].push(file);
+            return acc;
+          }, {} as Record<string, (typeof service.media_link.files)[0][]>);
+
+          media = Object.entries(filesByProviderRef).map(([providerRef, files]) => {
+            const variants = files.reduce((acc, file) => {
+              acc[file.type_variant] = { url: file.url };
+              return acc;
+            }, {} as Record<string, { url: string }>);
+
+            return {
+              id: service.media_link.media_id,
+              providerRef,
+              variants,
+            };
+          });
         }
 
         return {
@@ -69,11 +81,8 @@ export class GetUserServicesUseCase {
           description: service.description,
           price: service.base_price_cents,
           currency: service.currency,
+          status: service.status,
           categories: service.categories.map((sc) => sc.category.id.toString()),
-          provider: {
-            id: service.user.id,
-            name: service.user.profile?.name ?? '',
-          },
           rating: 0,
           reviewsCount: 0,
           city: service.location_city,
