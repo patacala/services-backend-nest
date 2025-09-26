@@ -17,7 +17,7 @@ export class CloudflareStreamService {
 
     if (!this.accountId || !this.apiToken) {
       throw new Error(
-        'CloudflareStreamService: Missing CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_TOKEN in environment',
+        'CloudflareStreamService: Missing CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_STREAM_API_TOKEN in environment',
       );
     }
 

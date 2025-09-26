@@ -12,7 +12,7 @@ export class CloudflareImagesService {
 
   constructor() {
     this.accountId = process.env.CLOUDFLARE_ACCOUNT_ID || '';
-    this.apiToken = process.env.CLOUDFLARE_API_TOKEN || '';
+    this.apiToken = process.env.CLOUDFLARE_STREAM_API_TOKEN || '';
 
     if (!this.accountId || !this.apiToken) {
       throw new Error(
