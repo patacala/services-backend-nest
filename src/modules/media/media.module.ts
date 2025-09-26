@@ -9,6 +9,8 @@ import { UpdateImageUseCase } from './application/use-cases/updateImage';
 import { GetImageDetailsUseCase } from './application/use-cases/getImageDetails';
 import { DeleteImageUseCase } from './application/use-cases/deleteImage';
 import { ListImagesUseCase } from './application/use-cases/listImages';
+import { VideosController } from './infrastructure/controllers/videos.controller';
+import { GenerateDirectUploadUrlUseCase } from './application/use-cases/videos/generateDirectUploadUrl';
 
 @Module({
   imports: [
@@ -16,13 +18,14 @@ import { ListImagesUseCase } from './application/use-cases/listImages';
     SharedModule,
     MulterModule.register({ storage: memoryStorage() }),
   ],
-  controllers: [MediaController],
+  controllers: [MediaController, VideosController],
   providers: [
     UploadImageUseCase,
     UpdateImageUseCase,
     GetImageDetailsUseCase,
     DeleteImageUseCase,
     ListImagesUseCase,
+    GenerateDirectUploadUrlUseCase,
   ],
 })
 export class MediaModule {}

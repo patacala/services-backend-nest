@@ -16,7 +16,6 @@ yarn-error.log* # Logs de error de Yarn
 # Archivos de entorno y configuraciones sensibles (ej. claves API).
 # Si tienes un archivo .env, es crucial ignorarlo.
 .env
-.env.*
 
 # Ignorar credenciales de Firebase
 src/shared/firebase/firebase-service-account.json
