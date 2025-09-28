@@ -1,13 +1,26 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+
+type MediaFile = Prisma.MediaFileGetPayload<{}>;
 
 @Injectable()
 export class GetUserBookServicesUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
+  private mapProfileMedia(files: MediaFile[] | undefined): Record<string, { url: string }> | null {
+    if (!files || files.length === 0) {
+      return null;
+    }
+
+    return files.reduce((acc, file) => {
+      acc[file.type_variant] = { url: file.url };
+      return acc;
+    }, {} as Record<string, { url: string }>);
+  }
+
   async execute(userId: string) {
     try {
-      // Obtener información del usuario consultado
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
         select: { role: true },
@@ -20,8 +33,8 @@ export class GetUserBookServicesUseCase {
       const bookings = await this.prisma.bookService.findMany({
         where: {
           OR: [
-            { user_id: userId }, // Reservas que hizo el usuario
-            { service: { user_id: userId } }, // Reservas de servicios del usuario
+            { user_id: userId },
+            { service: { user_id: userId } },
           ],
         },
         include: {
@@ -32,22 +45,40 @@ export class GetUserBookServicesUseCase {
               },
               user: {
                 include: {
-                  profile: true,
+                  profile: {
+                    include: {
+                      media_link: {
+                        include: {
+                          files: true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
           },
           user: {
             include: {
-              profile: true,
+              profile: {
+                include: {
+                  media_link: {
+                    include: {
+                      files: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
       });
 
-      // Mapear todas las reservas
       const mappedBookings = bookings.map((booking) => {
         const isMyBooking = booking.user_id === userId;
+        
+        const providerMedia = this.mapProfileMedia(booking.service.user.profile?.media_link?.files);
+        const clientMedia = this.mapProfileMedia(booking.user.profile?.media_link?.files);
         
         return {
           id: booking.id,
@@ -74,11 +105,13 @@ export class GetUserBookServicesUseCase {
           provider: {
             id: booking.service.user.id,
             name: booking.service.user.profile?.name ?? '',
+            media: providerMedia,
           },
           client: {
             id: booking.user.id,
             name: booking.user.profile?.name ?? '',
             role: booking.user.role,
+            media: clientMedia,
           },
           categories: booking.service.categories.map((sc) =>
             sc.category.id.toString(),
@@ -88,18 +121,14 @@ export class GetUserBookServicesUseCase {
         };
       });
 
-      // Separar las reservas en dos arrays
       const myBookings = mappedBookings.filter(booking => booking.userId === userId);
       const otherBookings = mappedBookings.filter(booking => booking.userId !== userId);
 
-      // Función para ordenar: pendientes primero, luego por fecha de creación (más reciente primero)
       const sortBookings = (bookings: any) => {
         return bookings.sort((a: any, b: any) => {
-          // Primero ordenar por estado (pendientes primero)
           if (a.status === 'pending' && b.status !== 'pending') return -1;
           if (a.status !== 'pending' && b.status === 'pending') return 1;
           
-          // Si tienen el mismo estado, ordenar por fecha de creación (más reciente primero)
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
       };
