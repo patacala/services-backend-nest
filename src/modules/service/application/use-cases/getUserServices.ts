@@ -40,7 +40,11 @@ export class GetUserServicesUseCase {
           },
           media_link: {
             include: {
-              files: true,
+              files: {
+                orderBy: {
+                  position: 'asc',
+                },
+              },
             },
           },
         },

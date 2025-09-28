@@ -228,7 +228,6 @@ model MediaLink {
   media_id   String     @id @default(uuid()) @db.Uuid
   owner_type MediaOwner
   owner_id   String     @db.Uuid
-  position   Int?       @default(0)
   created_at DateTime   @default(now())
 
   profile Profile?
@@ -253,6 +252,7 @@ model MediaFile {
   width                Int?
   height               Int?
   duration_seconds     Int?
+  position             Int           @default(0)
   created_at           DateTime      @default(now())
 
   @@unique([provider, provider_ref, type_variant])

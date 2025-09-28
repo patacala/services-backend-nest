@@ -10,15 +10,8 @@ import {
   IsArray,
   ArrayNotEmpty,
   ValidateNested,
+  IsBoolean,
 } from 'class-validator';
-
-class MediaVariantDto {
-  @IsString({ message: 'El nombre de la variante debe ser un texto válido' })
-  name: string;
-
-  @IsString({ message: 'La URL de la variante debe ser un texto válido' })
-  url: string;
-}
 
 class MediaDto {
   @IsString()
@@ -26,6 +19,10 @@ class MediaDto {
 
   @IsString()
   id: string;
+
+  @IsBoolean()
+  @IsOptional()
+  downloaded?: boolean;
 
   @IsArray()
   @IsString({ each: true, message: 'Cada variante debe ser una URL de texto válida' })
@@ -80,15 +77,13 @@ export class CreateServiceDto {
 }
 
 export class UpdateServiceDto {
-  @IsOptional()
   @IsString({ message: 'El título debe ser un texto válido' })
-  @IsNotEmpty({ message: 'El título es obligatorio si se proporciona' })
-  title?: string;
+  @IsNotEmpty({ message: 'El título es obligatorio' })
+  title: string;
 
-  @IsOptional()
   @IsString({ message: 'La descripción debe ser un texto válido' })
-  @IsNotEmpty({ message: 'La descripción es obligatoria si se proporciona' })
-  description?: string;
+  @IsNotEmpty({ message: 'La descripción es obligatoria' })
+  description: string;
 
   @IsOptional()
   @IsNumber({}, { message: 'El precio base debe ser un número válido' })
@@ -117,13 +112,13 @@ export class UpdateServiceDto {
   @Max(180, { message: 'La longitud máxima es 180' })
   lon?: number;
 
-  @IsOptional()
-  @IsString({ message: 'El ID del medio de cobertura debe ser un texto válido' })
-  coverMediaId?: string;
-
-  @IsOptional()
   @IsArray({ message: 'Las categorías deben enviarse en un arreglo' })
-  @ArrayNotEmpty({ message: 'Debes seleccionar al menos una categoría si se proporciona' })
+  @ArrayNotEmpty({ message: 'Debes seleccionar al menos una categoría' })
   @IsString({ each: true, message: 'Cada categoría debe ser un string válido' })
   categoryIds?: string[];
+
+  @IsArray({ message: 'Los medios deben enviarse en un array' })
+  @ValidateNested({ each: true })
+  @Type(() => MediaDto)
+  media?: MediaDto[];
 }

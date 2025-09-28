@@ -11,7 +11,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
-import { CreateServiceDto } from '../dtos/service.dto';
+import { CreateServiceDto, UpdateServiceDto } from '../dtos/service.dto';
 import { CreateServiceUseCase } from '../../application/use-cases/createService';
 import { UpdateServiceUseCase } from '../../application/use-cases/updateService';
 import { GetUserServicesUseCase } from '../../application/use-cases/getUserServices';
@@ -121,7 +121,7 @@ export class ServiceController {
   }
 
   @Post('provider-account')
-  async createProviderAccount(@Req() req, @Body() dto: CreateServiceDto) {
+  async createProviderAccount(@Req() req, @Body() dto: UpdateServiceDto) {
     const userId = req.user.id;
     return this.createAccountProvServiceUC.execute(userId, dto);
   }

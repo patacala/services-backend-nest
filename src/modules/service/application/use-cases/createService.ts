@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 import { CreateServiceDto } from '../../infrastructure/dtos/service.dto';
-import { MediaVariant } from '@prisma/client';
+import { MediaKind, MediaProvider, MediaVariant } from '@prisma/client';
 
 @Injectable()
 export class CreateServiceUseCase {
@@ -59,16 +59,19 @@ export class CreateServiceUseCase {
               mediaLinkId = newMediaLink.media_id;
               const mediaFilesToCreate = [];
               
-              for (const mediaItem of dto.media) {
+              for (const [index, mediaItem] of dto.media.entries()) {
+                  const position = index;
+
                   for (const variant of mediaItem.variants) {
                       mediaFilesToCreate.push({
                           link_id: newMediaLink.media_id,
                           uploaded_by: userId,
-                          kind: 'image',
-                          provider: 'cloudflare_images',
+                          kind: MediaKind.image,
+                          provider: MediaProvider.cloudflare_images,
                           provider_ref: mediaItem.id,
                           type_variant: this.getVariantFromUrl(variant),
-                          url: variant                                 
+                          url: variant,
+                          position: position
                       });
                   }
               }
