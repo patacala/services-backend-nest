@@ -15,9 +15,10 @@ interface ListServicesParams {
   limit?: string;
 }
 
-type MediaImage = {
+type Media = {
   id: string;
   providerRef: string;
+  kind: 'image' | 'video';
   variants: {
     [key: string]: { url: string };
   };
@@ -80,12 +81,12 @@ export class GetListServicesUseCase {
 
       if (tag) {
         where.tags = {
-            some: {
-                tag: {
-                    slug: tag
-                }
-            }
-        }
+          some: {
+            tag: {
+              slug: tag,
+            },
+          },
+        };
       }
 
       if (near && radius) {
@@ -126,7 +127,11 @@ export class GetListServicesUseCase {
           favorites: userId ? { where: { user_id: userId } } : false,
           media_link: {
             include: {
-              files: true,
+              files: {
+                orderBy: {
+                  position: 'asc',
+                },
+              },
             },
           },
         },
@@ -136,7 +141,7 @@ export class GetListServicesUseCase {
       });
 
       const formattedServices = services.map((service) => {
-        let media: MediaImage[] = [];
+        let media: Media[] = [];
         if (service.media_link && service.media_link.files.length > 0) {
           const filesByProviderRef = service.media_link.files.reduce((acc, file) => {
             const key = file.provider_ref;
@@ -145,17 +150,18 @@ export class GetListServicesUseCase {
             }
             acc[key].push(file);
             return acc;
-          }, {} as Record<string, typeof service.media_link.files>);
+          }, {} as Record<string, (typeof service.media_link.files)[0][]>);
 
           media = Object.entries(filesByProviderRef).map(([providerRef, files]) => {
             const variants = files.reduce((acc, file) => {
               acc[file.type_variant] = { url: file.url };
               return acc;
             }, {} as Record<string, { url: string }>);
-            
+
             return {
               id: service.media_link.media_id,
               providerRef,
+              kind: files[0].kind,
               variants,
             };
           });

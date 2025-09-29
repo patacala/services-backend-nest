@@ -1,3 +1,4 @@
+import { MediaKind } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsString,
@@ -24,9 +25,14 @@ class MediaDto {
   @IsOptional()
   downloaded?: boolean;
 
+  @IsString()
+  @IsNotEmpty({ message: 'El tipo de archivo es obligatorio' })
+  kind?: MediaKind;
+
   @IsArray()
+  @IsOptional()
   @IsString({ each: true, message: 'Cada variante debe ser una URL de texto válida' })
-  variants: string[];
+  variants?: string[];
 }
 
 export class CreateServiceDto {

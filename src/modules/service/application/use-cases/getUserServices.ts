@@ -1,12 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 
-// Tipo consistente con GetListServicesUseCase para las imágenes del servicio
-type MediaImage = {
+// Tipo consistente para cualquier tipo de media (imagen o video)
+type Media = {
   id: string;
   providerRef: string;
+  kind: 'image' | 'video';
   variants: {
-    [key:string]: { url: string };
+    [key: string]: { url: string };
   };
 };
 
@@ -54,7 +55,7 @@ export class GetUserServicesUseCase {
       });
 
       const servicesMapped = services.map((service) => {
-        let media: MediaImage[] = [];
+        let media: Media[] = [];
         if (service.media_link && service.media_link.files.length > 0) {
           const filesByProviderRef = service.media_link.files.reduce((acc, file) => {
             const key = file.provider_ref;
@@ -74,6 +75,7 @@ export class GetUserServicesUseCase {
             return {
               id: service.media_link.media_id,
               providerRef,
+              kind: files[0].kind,
               variants,
             };
           });

@@ -83,16 +83,42 @@ export class UpdateServiceUseCase {
               });
               mediaOperations.push(deleteOp);
 
-              const newFilesData = incomingMedia.variants.map((variantUrl) => ({
-                link_id: serviceToUpdate.media_link_id,
-                uploaded_by: userId,
-                kind: MediaKind.image,
-                provider: MediaProvider.cloudflare_images,
-                provider_ref: incomingMedia.id,
-                type_variant: this.getVariantFromUrl(variantUrl),
-                url: variantUrl,
-                position,
-              }));
+              let newFilesData: Array<{
+                link_id: string;
+                uploaded_by: string;
+                kind: MediaKind;
+                provider: MediaProvider;
+                provider_ref: string;
+                type_variant: MediaVariant;
+                url: string;
+                position: number;
+              }>;
+              
+              if (incomingMedia.kind === 'video') {
+                const videoUrl = `https://customer-kb0znv13nolt7e8g.cloudflarestream.com/${incomingMedia.id}/manifest/video.m3u8`;
+                newFilesData = [{
+                  link_id: serviceToUpdate.media_link_id,
+                  uploaded_by: userId,
+                  kind: MediaKind.video,
+                  provider: MediaProvider.cloudflare_images,
+                  provider_ref: incomingMedia.id,
+                  type_variant: MediaVariant.public,
+                  url: videoUrl,
+                  position,
+                }];
+              } else {
+                // Para imágenes, usar las variantes que vienen
+                newFilesData = incomingMedia.variants.map((variantUrl) => ({
+                  link_id: serviceToUpdate.media_link_id,
+                  uploaded_by: userId,
+                  kind: MediaKind.image,
+                  provider: MediaProvider.cloudflare_images,
+                  provider_ref: incomingMedia.id,
+                  type_variant: this.getVariantFromUrl(variantUrl),
+                  url: variantUrl,
+                  position,
+                }));
+              }
 
               if (newFilesData.length > 0) {
                 const createOp = tx.mediaFile.createMany({ data: newFilesData });
