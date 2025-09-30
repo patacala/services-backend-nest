@@ -66,22 +66,47 @@ export class CreateAccountProvServiceUseCase {
                     });
 
                     mediaLinkId = newMediaLink.media_id;
-                    const mediaFilesToCreate = [];
+                    const mediaFilesToCreate: Array<{
+                        link_id: string;
+                        uploaded_by: string;
+                        kind: MediaKind;
+                        provider: MediaProvider;
+                        provider_ref: string;
+                        type_variant: MediaVariant;
+                        url: string;
+                        position: number;
+                    }> = [];
                     
                     for (const [index, mediaItem] of dto.media.entries()) {
                         const position = index;
 
-                        for (const variant of mediaItem.variants) {
+                        if (mediaItem.kind === 'video') {
+                            // Para videos, crear un solo archivo con variante public
+                            const videoUrl = `https://customer-kb0znv13nolt7e8g.cloudflarestream.com/${mediaItem.id}/manifest/video.m3u8`;
                             mediaFilesToCreate.push({
                                 link_id: newMediaLink.media_id,
                                 uploaded_by: userId,
-                                kind: MediaKind.image,
+                                kind: MediaKind.video,
                                 provider: MediaProvider.cloudflare_images,
                                 provider_ref: mediaItem.id,
-                                type_variant: this.getVariantFromUrl(variant),
-                                url: variant,
+                                type_variant: MediaVariant.public,
+                                url: videoUrl,
                                 position: position
                             });
+                        } else {
+                            // Para imágenes, crear todas las variantes
+                            for (const variant of mediaItem.variants) {
+                                mediaFilesToCreate.push({
+                                    link_id: newMediaLink.media_id,
+                                    uploaded_by: userId,
+                                    kind: MediaKind.image,
+                                    provider: MediaProvider.cloudflare_images,
+                                    provider_ref: mediaItem.id,
+                                    type_variant: this.getVariantFromUrl(variant),
+                                    url: variant,
+                                    position: position
+                                });
+                            }
                         }
                     }
 
