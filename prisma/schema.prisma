@@ -102,6 +102,7 @@ model User {
   uploadIntents        UploadIntent[]   @relation("UserUploadsIntents")
   categories           UserCategory[]
   bookings             BookService[]    @relation("UserBookings")
+  bookServiceMessages BookServiceMessage[] @relation("BookServiceMessages")
 }
 
 model Profile {
@@ -191,6 +192,7 @@ model BookService {
   service    Service @relation("ServiceBookings", fields: [service_id], references: [id])
   user_id    String  @db.Uuid
   user       User    @relation("UserBookings", fields: [user_id], references: [id])
+  messages   BookServiceMessage[]
 
   service_name     String
   date_time        DateTime
@@ -198,7 +200,6 @@ model BookService {
   comments         String?
   responsible_name String
   phone_number     String
-
   status     BookServiceStatus @default(pending)
   created_at DateTime          @default(now())
   updated_at DateTime          @updatedAt
@@ -403,4 +404,18 @@ model UploadIntent {
   created_at      DateTime      @default(now())
 
   @@unique([user_id, idempotency_key])
+}
+
+model BookServiceMessage {
+  id              String      @id @default(uuid()) @db.Uuid
+  book_service_id String      @db.Uuid
+  book_service    BookService @relation(fields: [book_service_id], references: [id], onDelete: Cascade)
+  sender_id       String      @db.Uuid
+  sender          User        @relation("BookServiceMessages", fields: [sender_id], references: [id], onDelete: Cascade)
+  
+  message    String
+  created_at DateTime @default(now())
+  read_at    DateTime?
+  
+  @@index([book_service_id, created_at])
 }

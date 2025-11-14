@@ -6,6 +6,7 @@ import { ServiceModule } from './modules/service/service.module';
 import { FavoriteModule } from './modules/favorite/favorite.module';
 import { BookServiceModule } from './modules/bookService/bookService.module';
 import { MediaModule } from './modules/media/media.module';
+import { MessagesModule } from './modules/message/message.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MediaModule } from './modules/media/media.module';
     FavoriteModule,
     BookServiceModule,
     MediaModule,
+    MessagesModule
   ],
 })
 export class AppModule {}
