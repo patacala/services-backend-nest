@@ -33,30 +33,13 @@ export class GetMessagesUseCase {
         where: {
           book_service_id: bookServiceId,
         },
-        include: {
-          sender: {
-            select: {
-              id: true,
-              displayName: true,
-              profile: {
-                select: {
-                  name: true,
-                  media_link: {
-                    select: {
-                      files: {
-                        where: {
-                          type_variant: 'profileThumbnail'
-                        },
-                        select: {
-                          url: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+        select: {
+          id: true,
+          book_service_id: true,
+          sender_id: true,
+          message: true,
+          created_at: true,
+          read_at: true,
         },
         orderBy: {
           created_at: 'asc'
@@ -70,12 +53,6 @@ export class GetMessagesUseCase {
         message: msg.message,
         createdAt: msg.created_at,
         readAt: msg.read_at,
-        isOwn: msg.sender_id === userId,
-        sender: {
-          id: msg.sender.id,
-          name: msg.sender.profile?.name || msg.sender.displayName,
-          avatar: msg.sender.profile?.media_link?.files[0]?.url || null,
-        }
       }));
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
