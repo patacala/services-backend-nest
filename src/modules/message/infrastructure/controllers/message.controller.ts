@@ -26,6 +26,7 @@ export class MessageController {
   @Post()
   async createMessage(@Req() req, @Body() dto: CreateMessageDto) {
     const userId = req.user.id;
+    console.log(dto);
     return this.createMessageUC.execute(userId, dto);
   }
 

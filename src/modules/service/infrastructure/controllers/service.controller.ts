@@ -18,7 +18,6 @@ import { GetUserServicesUseCase } from '../../application/use-cases/getUserServi
 import { GetListServicesUseCase } from '../../application/use-cases/listServices';
 import { CreateAccountProvServiceUseCase } from '../../application/use-cases/createAccountProvService';
 
-
 @UseGuards(JwtAuthGuard)
 @Controller('services')
 export class ServiceController {

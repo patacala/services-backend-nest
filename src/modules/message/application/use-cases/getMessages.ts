@@ -28,7 +28,7 @@ export class GetMessagesUseCase {
         throw new ForbiddenException('You are not authorized to view these messages');
       }
 
-      // Obtener los mensajes
+      // Obtener los mensajes con sus media files
       const messages = await this.prisma.bookServiceMessage.findMany({
         where: {
           book_service_id: bookServiceId,
@@ -40,6 +40,21 @@ export class GetMessagesUseCase {
           message: true,
           created_at: true,
           read_at: true,
+          media_link: {
+            select: {
+              files: {
+                select: {
+                  id: true,
+                  url: true,
+                  type_variant: true,
+                  position: true,
+                },
+                orderBy: {
+                  position: 'asc'
+                }
+              }
+            }
+          }
         },
         orderBy: {
           created_at: 'asc'
@@ -53,6 +68,12 @@ export class GetMessagesUseCase {
         message: msg.message,
         createdAt: msg.created_at,
         readAt: msg.read_at,
+        media: msg.media_link?.files.map(file => ({
+          id: file.id,
+          url: file.url,
+          variant: file.type_variant,
+          position: file.position
+        })) || []
       }));
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {

@@ -48,6 +48,7 @@ enum MediaOwner {
   rating
   message
   profile
+  book_service_message
 }
 
 enum RatingVisibility {
@@ -96,13 +97,13 @@ model User {
   mediaFiles    MediaFile[]               @relation("UserUploads")
   tags          Tag[]
 
-  comments             Comment[]        @relation("UserComments")
-  conversationsCreated Conversation[]   @relation("UserConversations")
-  messageReceipts      MessageReceipt[] @relation("UserReceipts")
-  uploadIntents        UploadIntent[]   @relation("UserUploadsIntents")
+  comments             Comment[]            @relation("UserComments")
+  conversationsCreated Conversation[]       @relation("UserConversations")
+  messageReceipts      MessageReceipt[]     @relation("UserReceipts")
+  uploadIntents        UploadIntent[]       @relation("UserUploadsIntents")
   categories           UserCategory[]
-  bookings             BookService[]    @relation("UserBookings")
-  bookServiceMessages BookServiceMessage[] @relation("BookServiceMessages")
+  bookings             BookService[]        @relation("UserBookings")
+  bookServiceMessages  BookServiceMessage[] @relation("BookServiceMessages")
 }
 
 model Profile {
@@ -119,8 +120,8 @@ model Profile {
   lon              Float?
   address          String?
 
-  media_link_id    String?    @unique @db.Uuid
-  media_link       MediaLink? @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
+  media_link_id String?    @unique @db.Uuid
+  media_link    MediaLink? @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
 
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
@@ -172,8 +173,8 @@ model Service {
   location_city    String?
   lat              Float?
   lon              Float?
-  media_link_id    String?    @unique @db.Uuid
-  media_link       MediaLink? @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
+  media_link_id    String?       @unique @db.Uuid
+  media_link       MediaLink?    @relation(fields: [media_link_id], references: [media_id], onDelete: SetNull)
 
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
@@ -187,11 +188,11 @@ model Service {
 }
 
 model BookService {
-  id         String  @id @default(uuid()) @db.Uuid
-  service_id String  @db.Uuid
-  service    Service @relation("ServiceBookings", fields: [service_id], references: [id])
-  user_id    String  @db.Uuid
-  user       User    @relation("UserBookings", fields: [user_id], references: [id])
+  id         String               @id @default(uuid()) @db.Uuid
+  service_id String               @db.Uuid
+  service    Service              @relation("ServiceBookings", fields: [service_id], references: [id])
+  user_id    String               @db.Uuid
+  user       User                 @relation("UserBookings", fields: [user_id], references: [id])
   messages   BookServiceMessage[]
 
   service_name     String
@@ -200,9 +201,9 @@ model BookService {
   comments         String?
   responsible_name String
   phone_number     String
-  status     BookServiceStatus @default(pending)
-  created_at DateTime          @default(now())
-  updated_at DateTime          @updatedAt
+  status           BookServiceStatus @default(pending)
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
 }
 
 model ServiceCategory {
@@ -231,8 +232,9 @@ model MediaLink {
   owner_id   String     @db.Uuid
   created_at DateTime   @default(now())
 
-  profile Profile?
-  service Service?
+  profile            Profile?
+  service            Service?
+  bookServiceMessage BookServiceMessage? @relation("BookServiceMessageMedia")
 
   files MediaFile[] @relation("LinkFiles")
 }
@@ -412,10 +414,13 @@ model BookServiceMessage {
   book_service    BookService @relation(fields: [book_service_id], references: [id], onDelete: Cascade)
   sender_id       String      @db.Uuid
   sender          User        @relation("BookServiceMessages", fields: [sender_id], references: [id], onDelete: Cascade)
-  
-  message    String
-  created_at DateTime @default(now())
+
+  message       String
+  media_link_id String?    @unique @db.Uuid
+  media_link    MediaLink? @relation("BookServiceMessageMedia", fields: [media_link_id], references: [media_id], onDelete: SetNull)
+
+  created_at DateTime  @default(now())
   read_at    DateTime?
-  
+
   @@index([book_service_id, created_at])
 }
