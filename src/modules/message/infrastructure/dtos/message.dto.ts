@@ -1,6 +1,6 @@
 import { MediaKind } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
 
 export class MediaDto {
   @IsString()
@@ -28,12 +28,14 @@ export class CreateMessageDto {
   @IsUUID()
   bookServiceId: string;
 
-  @IsNotEmpty()
+  @ValidateIf((o) => !o.media || o.media.length === 0)
+  @IsNotEmpty({ message: 'El mensaje no puede estar vacío si no se envían imágenes' })
   @IsString()
   message: string;
 
-  @IsOptional()
+  @ValidateIf((o) => !o.message)
   @IsArray({ message: 'Los medios deben enviarse en un array' })
+  @ArrayMinSize(1, { message: 'Debe enviarse al menos una imagen si no hay mensaje' })
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
   media?: MediaDto[];
