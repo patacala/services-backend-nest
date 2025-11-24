@@ -19,7 +19,8 @@ export class RatingController {
 
   @Post()
   async createRating(@Req() req: any, @Body() dto: CreateRatingDto) {
-    return this.createRatingUseCase.execute(req.user.userId, dto);
+    const userId = req.user.id;
+    return this.createRatingUseCase.execute(userId, dto);
   }
 
   @Get('user/:userId')

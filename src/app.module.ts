@@ -7,6 +7,7 @@ import { FavoriteModule } from './modules/favorite/favorite.module';
 import { BookServiceModule } from './modules/bookService/bookService.module';
 import { MediaModule } from './modules/media/media.module';
 import { MessagesModule } from './modules/message/message.module';
+import { RatingsModule } from './modules/rating/ratings.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { MessagesModule } from './modules/message/message.module';
     FavoriteModule,
     BookServiceModule,
     MediaModule,
-    MessagesModule
+    MessagesModule,
+    RatingsModule
   ],
 })
 export class AppModule {}
