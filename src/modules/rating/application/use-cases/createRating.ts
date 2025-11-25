@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 import { CreateRatingDto } from '../../infrastructure/dtos/rating.dto';
+import { BookServiceStatus } from '@/modules/bookService/infrastructure/dtos/bookService.dto';
 
 @Injectable()
 export class CreateRatingUseCase {
@@ -26,6 +27,7 @@ export class CreateRatingUseCase {
           include: {
             bookings: {
               where: {
+                id: dto.bookingId,
                 user_id: raterUserId,
                 status: 'completed'
               }
@@ -44,60 +46,56 @@ export class CreateRatingUseCase {
         }
       }
 
-      const existingRating = await this.prisma.rating.findUnique({
-        where: {
-          rated_user_id_rater_user_id_service_id: {
+      const rating = await this.prisma.$transaction(async (tx) => {
+        
+        const createdRating = await tx.rating.create({
+          data: {
             rated_user_id: dto.ratedUserId,
             rater_user_id: raterUserId,
-            service_id: dto.serviceId || null
-          }
-        }
-      });
-
-      if (existingRating) {
-        throw new ConflictException('You have already rated this user for this service');
-      }
-
-      const rating = await this.prisma.rating.create({
-        data: {
-          rated_user_id: dto.ratedUserId,
-          rater_user_id: raterUserId,
-          service_id: dto.serviceId || null,
-          score: dto.score,
-          title: dto.title,
-          body: dto.body,
-          visibility: dto.visibility || 'public'
-        },
-        include: {
-          ratedUser: {
-            select: {
-              id: true,
-              displayName: true,
-              profile: {
-                select: {
-                  name: true
+            service_id: dto.serviceId || null,
+            score: dto.score,
+            title: dto.title,
+            body: dto.body,
+            visibility: dto.visibility || 'public'
+          },
+          include: {
+            ratedUser: {
+              select: {
+                id: true,
+                displayName: true,
+                profile: {
+                  select: {
+                    name: true
+                  }
                 }
               }
-            }
-          },
-          raterUser: {
-            select: {
-              id: true,
-              displayName: true,
-              profile: {
-                select: {
-                  name: true
+            },
+            raterUser: {
+              select: {
+                id: true,
+                displayName: true,
+                profile: {
+                  select: {
+                    name: true
+                  }
                 }
               }
-            }
-          },
-          service: {
-            select: {
-              id: true,
-              title: true
+            },
+            service: {
+              select: {
+                id: true,
+                title: true
+              }
             }
           }
-        }
+        });
+
+        await tx.bookService.update({
+          where: { id: dto.bookingId },
+          data: { status: BookServiceStatus.rated }
+        });
+
+        return createdRating;
       });
 
       return {
@@ -123,6 +121,7 @@ export class CreateRatingUseCase {
           title: rating.service.title
         } : null
       };
+
     } catch (error) {
       if (
         error instanceof BadRequestException || 

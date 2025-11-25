@@ -41,7 +41,8 @@ export enum BookServiceStatus {
   accepted = 'accepted',
   rejected = 'rejected',
   completed = 'completed',
-  cancelled = 'cancelled'
+  cancelled = 'cancelled',
+  rated = 'rated'
 }
 
 export class UpdateBookServiceStatusDto {

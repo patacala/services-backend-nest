@@ -23,6 +23,10 @@ export class CreateRatingDto {
   @IsUUID()
   serviceId?: string;
 
+  @IsNotEmpty({ message: 'BookingId is required' })
+  @IsUUID()
+  bookingId: string;
+
   @IsNotEmpty()
   @IsInt()
   @Min(1, { message: 'Score must be at least 1' })
