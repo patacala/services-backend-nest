@@ -14,18 +14,27 @@ export enum RatingVisibility {
   HIDDEN = 'hidden'
 }
 
+export enum RoleOfRater {
+  CLIENT = 'client',
+  PROVIDER = 'provider'
+}
+
 export class CreateRatingDto {
   @IsNotEmpty()
   @IsUUID()
   ratedUserId: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsUUID()
-  serviceId?: string;
+  serviceId: string;
 
-  @IsNotEmpty({ message: 'BookingId is required' })
+  @IsNotEmpty()
   @IsUUID()
-  bookingId: string;
+  bookingId?: string;
+
+  @IsNotEmpty()
+  @IsEnum(RoleOfRater)
+  roleOfRater: RoleOfRater;
 
   @IsNotEmpty()
   @IsInt()

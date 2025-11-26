@@ -22,78 +22,56 @@ export class CreateRatingUseCase {
       }
 
       if (dto.serviceId) {
-        const service = await this.prisma.service.findUnique({
-          where: { id: dto.serviceId },
+        const booking = await this.prisma.bookService.findUnique({
+          where: { id: dto.bookingId },
           include: {
-            bookings: {
-              where: {
-                id: dto.bookingId,
-                user_id: raterUserId,
-                status: 'completed'
+            service: {
+              include: {
+                user: true
               }
             }
           }
         });
 
-        if (!service) {
-          throw new BadRequestException('Service not found');
+        if (!booking) {
+          throw new BadRequestException('Booking not found');
         }
 
-        if (service.bookings.length === 0) {
-          throw new ForbiddenException(
-            'You can only rate services you have completed bookings with'
+        const isClientRater = booking.user_id === raterUserId;
+        const isProviderRater = booking.service.user.id === raterUserId;
+
+        if (!isClientRater && !isProviderRater) {
+          throw new BadRequestException(
+            'You can only rate bookings you are part of'
           );
+        }
+
+        if (booking.status !== 'completed' && booking.status !== 'rated') {
+          throw new BadRequestException('You can only rate completed bookings');
         }
       }
 
       const rating = await this.prisma.$transaction(async (tx) => {
-        
         const createdRating = await tx.rating.create({
           data: {
             rated_user_id: dto.ratedUserId,
             rater_user_id: raterUserId,
-            service_id: dto.serviceId || null,
+            service_id: dto.serviceId,
+            booking_id: dto.bookingId || null,
+            role_of_rater: dto.roleOfRater,
             score: dto.score,
             title: dto.title,
             body: dto.body,
             visibility: dto.visibility || 'public'
-          },
-          include: {
-            ratedUser: {
-              select: {
-                id: true,
-                displayName: true,
-                profile: {
-                  select: {
-                    name: true
-                  }
-                }
-              }
-            },
-            raterUser: {
-              select: {
-                id: true,
-                displayName: true,
-                profile: {
-                  select: {
-                    name: true
-                  }
-                }
-              }
-            },
-            service: {
-              select: {
-                id: true,
-                title: true
-              }
-            }
           }
         });
 
-        await tx.bookService.update({
-          where: { id: dto.bookingId },
-          data: { status: BookServiceStatus.rated }
-        });
+        if (dto.bookingId) {
+          await tx.bookService.update({
+            where: { id: dto.bookingId },
+            data: { status: BookServiceStatus.rated }
+          });
+        }
 
         return createdRating;
       });
@@ -107,19 +85,7 @@ export class CreateRatingUseCase {
         title: rating.title,
         body: rating.body,
         visibility: rating.visibility,
-        createdAt: rating.created_at,
-        ratedUser: {
-          id: rating.ratedUser.id,
-          name: rating.ratedUser.profile?.name || rating.ratedUser.displayName
-        },
-        raterUser: {
-          id: rating.raterUser.id,
-          name: rating.raterUser.profile?.name || rating.raterUser.displayName
-        },
-        service: rating.service ? {
-          id: rating.service.id,
-          title: rating.service.title
-        } : null
+        createdAt: rating.created_at
       };
 
     } catch (error) {
