@@ -6,6 +6,7 @@ import { GetRatingsByUserUseCase } from '../../application/use-cases/getRatingsB
 import { UpdateRatingUseCase } from '../../application/use-cases/updateRating';
 import { DeleteRatingUseCase } from '../../application/use-cases/deleteRating';
 import { JwtAuthGuard } from '@/shared/jwt-auth.guard';
+import { GetRatingsByServiceUseCase } from '../../application/use-cases/getRatingsByService';
 
 @UseGuards(JwtAuthGuard)
 @Controller('ratings')
@@ -13,6 +14,7 @@ export class RatingController {
   constructor(
     private readonly createRatingUseCase: CreateRatingUseCase,
     private readonly getRatingsByUserUseCase: GetRatingsByUserUseCase,
+    private readonly getRatingsByServiceUseCase: GetRatingsByServiceUseCase,
     private readonly updateRatingUseCase: UpdateRatingUseCase,
     private readonly deleteRatingUseCase: DeleteRatingUseCase,
   ) {}
@@ -27,6 +29,11 @@ export class RatingController {
   async getRatingsByUser(@Req() req: any) {
     const userId = req.user.id;
     return this.getRatingsByUserUseCase.execute(userId);
+  }
+
+  @Get('service/:id')
+  async getRatingsByService(@Param('id') serviceId: string,) {
+    return this.getRatingsByServiceUseCase.execute(serviceId);
   }
 
   @Put(':id')

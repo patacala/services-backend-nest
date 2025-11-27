@@ -5,12 +5,14 @@ import { CreateRatingUseCase } from './application/use-cases/createRating';
 import { UpdateRatingUseCase } from './application/use-cases/updateRating';
 import { DeleteRatingUseCase } from './application/use-cases/deleteRating';
 import { GetRatingsByUserUseCase } from './application/use-cases/getRatingsByUser';
+import { GetRatingsByServiceUseCase } from './application/use-cases/getRatingsByService';
 
 @Module({
   controllers: [RatingController],
   providers: [
     CreateRatingUseCase,
     GetRatingsByUserUseCase,
+    GetRatingsByServiceUseCase,
     UpdateRatingUseCase,
     DeleteRatingUseCase,
     PrismaService,
