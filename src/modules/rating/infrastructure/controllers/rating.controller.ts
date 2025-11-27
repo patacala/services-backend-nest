@@ -23,12 +23,10 @@ export class RatingController {
     return this.createRatingUseCase.execute(userId, dto);
   }
 
-  @Get('user/:userId')
-  async getRatingsByUser(
-    @Param('userId') userId: string,
-    @Query('serviceId') serviceId?: string
-  ) {
-    return this.getRatingsByUserUseCase.execute(userId, serviceId);
+  @Get('user')
+  async getRatingsByUser(@Req() req: any) {
+    const userId = req.user.id;
+    return this.getRatingsByUserUseCase.execute(userId);
   }
 
   @Put(':id')
