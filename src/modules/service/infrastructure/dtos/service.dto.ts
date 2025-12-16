@@ -14,7 +14,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 
-class MediaDto {
+export class MediaDto {
   @IsString()
   filename: string;
 

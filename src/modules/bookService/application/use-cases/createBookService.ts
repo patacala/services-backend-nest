@@ -2,7 +2,6 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 import { CreateBookServiceDto } from '../../infrastructure/dtos/bookService.dto';
 
-
 @Injectable()
 export class CreateBookServiceUseCase {
   constructor(private readonly prisma: PrismaService) {}

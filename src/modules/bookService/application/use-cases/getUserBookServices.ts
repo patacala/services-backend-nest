@@ -1,3 +1,4 @@
+import { RoleOfRater } from '@/modules/rating/infrastructure/dtos/rating.dto';
 import { PrismaService } from '@/shared/prisma.service';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
@@ -74,12 +75,28 @@ export class GetUserBookServicesUseCase {
         },
       });
 
+      const ratedBookings = await this.prisma.rating.findMany({
+        where: {
+          rater_user_id: userId,
+          booking_id: { in: bookings.map(b => b.id) }
+        },
+        select: {
+          booking_id: true,
+          role_of_rater: true,
+        }
+      });
+
       const mappedBookings = bookings.map((booking) => {
         const isMyBooking = booking.user_id === userId;
-        
+        const raterRole = isMyBooking ? RoleOfRater.CLIENT : RoleOfRater.PROVIDER;
+
+        const hasRated = ratedBookings.some(
+          r => r.booking_id === booking.id && r.role_of_rater === raterRole
+        );
+
         const providerMedia = this.mapProfileMedia(booking.service.user.profile?.media_link?.files);
         const clientMedia = this.mapProfileMedia(booking.user.profile?.media_link?.files);
-        
+
         return {
           id: booking.id,
           serviceId: booking.service_id,
@@ -102,20 +119,26 @@ export class GetUserBookServicesUseCase {
           status: booking.status,
           role: user.role,
           bookingType: isMyBooking ? 'client' : 'provider',
+
           provider: {
             id: booking.service.user.id,
             name: booking.service.user.profile?.name ?? '',
             media: providerMedia,
           },
+
           client: {
             id: booking.user.id,
             name: booking.user.profile?.name ?? '',
             role: booking.user.role,
             media: clientMedia,
           },
+
           categories: booking.service.categories.map((sc) =>
             sc.category.id.toString(),
           ),
+
+          shouldRate: !hasRated,
+
           createdAt: booking.created_at,
           updatedAt: booking.updated_at,
         };
@@ -128,7 +151,7 @@ export class GetUserBookServicesUseCase {
         return bookings.sort((a: any, b: any) => {
           if (a.status === 'pending' && b.status !== 'pending') return -1;
           if (a.status !== 'pending' && b.status === 'pending') return 1;
-          
+
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         });
       };

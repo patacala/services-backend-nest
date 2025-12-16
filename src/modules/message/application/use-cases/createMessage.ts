@@ -1,10 +1,22 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma.service';
 import { CreateMessageDto } from '../../infrastructure/dtos/message.dto';
+import { MediaKind, MediaProvider, MediaVariant } from '@prisma/client';
 
 @Injectable()
 export class CreateMessageUseCase {
   constructor(private readonly prisma: PrismaService) {}
+
+  private getVariantFromUrl(url: string): MediaVariant {
+    const segments = url.split('/');
+    const lastSegment = segments.pop() || '';
+
+    if (Object.values(MediaVariant).includes(lastSegment as MediaVariant)) {
+      return lastSegment as MediaVariant;
+    }
+
+    return MediaVariant.public;
+  }
 
   async execute(userId: string, dto: CreateMessageDto) {
     try {
@@ -35,29 +47,32 @@ export class CreateMessageUseCase {
         throw new BadRequestException('Cannot send messages to a rejected or cancelled booking');
       }
 
-      // Crear el mensaje
-      const message = await this.prisma.bookServiceMessage.create({
-        data: {
-          book_service_id: dto.bookServiceId,
-          sender_id: userId,
-          message: dto.message,
-        },
-        include: {
-          sender: {
-            select: {
-              id: true,
-              displayName: true,
-              profile: {
-                select: {
-                  name: true,
-                  media_link: {
-                    select: {
-                      files: {
-                        where: {
-                          type_variant: 'profileThumbnail'
-                        },
-                        select: {
-                          url: true
+      // Crear el mensaje con transacción
+      const result = await this.prisma.$transaction(async (tx) => {
+        const message = await tx.bookServiceMessage.create({
+          data: {
+            book_service_id: dto.bookServiceId,
+            sender_id: userId,
+            message: dto.message,
+            media_link_id: null
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                displayName: true,
+                profile: {
+                  select: {
+                    name: true,
+                    media_link: {
+                      select: {
+                        files: {
+                          where: {
+                            type_variant: 'profileThumbnail'
+                          },
+                          select: {
+                            url: true
+                          }
                         }
                       }
                     }
@@ -66,21 +81,89 @@ export class CreateMessageUseCase {
               }
             }
           }
+        });
+
+        let mediaLinkId: string | null = null;
+        let mediaFiles: any[] = [];
+
+        // Procesar media si existe
+        if (dto.media && dto.media.length > 0) {
+          const newMediaLink = await tx.mediaLink.create({
+            data: {
+              owner_type: 'book_service_message',
+              owner_id: message.id,
+            },
+          });
+
+          mediaLinkId = newMediaLink.media_id;
+          const mediaFilesToCreate: Array<{
+            link_id: string;
+            uploaded_by: string;
+            kind: MediaKind;
+            provider: MediaProvider;
+            provider_ref: string;
+            type_variant: MediaVariant;
+            url: string;
+            position: number;
+          }> = [];
+
+          for (const [index, mediaItem] of dto.media.entries()) {
+            const position = index;
+
+            if (mediaItem.kind === 'image' && mediaItem.variants) {
+              for (const variant of mediaItem.variants) {
+                mediaFilesToCreate.push({
+                  link_id: newMediaLink.media_id,
+                  uploaded_by: userId,
+                  kind: MediaKind.image,
+                  provider: MediaProvider.cloudflare_images,
+                  provider_ref: mediaItem.id,
+                  type_variant: this.getVariantFromUrl(variant),
+                  url: variant,
+                  position: position
+                });
+              }
+            }
+          }
+
+          if (mediaFilesToCreate.length > 0) {
+            await tx.mediaFile.createMany({
+              data: mediaFilesToCreate,
+            });
+
+            await tx.bookServiceMessage.update({
+              where: { id: message.id },
+              data: { media_link_id: mediaLinkId },
+            });
+
+            mediaFiles = await tx.mediaFile.findMany({
+              where: { link_id: mediaLinkId },
+              orderBy: { position: 'asc' }
+            });
+          }
         }
+
+        return { message, mediaFiles };
       });
 
       return {
-        id: message.id,
-        bookServiceId: message.book_service_id,
-        senderId: message.sender_id,
-        message: message.message,
-        createdAt: message.created_at,
-        readAt: message.read_at,
+        id: result.message.id,
+        bookServiceId: result.message.book_service_id,
+        senderId: result.message.sender_id,
+        message: result.message.message,
+        createdAt: result.message.created_at,
+        readAt: result.message.read_at,
         sender: {
-          id: message.sender.id,
-          name: message.sender.profile?.name || message.sender.displayName,
-          avatar: message.sender.profile?.media_link?.files[0]?.url || null,
-        }
+          id: result.message.sender.id,
+          name: result.message.sender.profile?.name || result.message.sender.displayName,
+          avatar: result.message.sender.profile?.media_link?.files[0]?.url || null,
+        },
+        media: result.mediaFiles.map(file => ({
+          id: file.id,
+          url: file.url,
+          variant: file.type_variant,
+          position: file.position
+        }))
       };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
