@@ -6,8 +6,8 @@ import { PrismaServiceRepository } from './infrastructure/repositories/prisma-se
 import { ServiceRepository } from './domain/repositories/service.repository';
 import { CreateServiceUseCase } from './application/use-cases/createService';
 import { ServiceController } from './infrastructure/controllers/service.controller';
-import { GetUserServicesUseCase } from './application/use-cases/getUserServices';
 import { UpdateServiceUseCase } from './application/use-cases/updateService';
+import { GetUserServicesUseCase } from './application/use-cases/getUserServices';
 import { GetListServicesUseCase } from './application/use-cases/listServices';
 import { CreateAccountProvServiceUseCase } from './application/use-cases/createAccountProvService';
 import { JwtModule } from '@nestjs/jwt';

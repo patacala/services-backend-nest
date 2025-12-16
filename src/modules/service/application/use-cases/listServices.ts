@@ -168,7 +168,9 @@ export class GetListServicesUseCase {
         }
 
         const providerThumbnailUrl = service.user.profile?.media_link?.files?.[0]?.url || null;
-
+        const averageRating = service.rating_count > 0 
+        ? (service.total_rating_sum.toNumber() / service.rating_count).toFixed(1): 0;
+        
         return {
           id: service.id,
           title: service.title,
@@ -183,7 +185,7 @@ export class GetListServicesUseCase {
               ? { profileThumbnail: { url: providerThumbnailUrl } }
               : null,
           },
-          rating: 0,
+          rating: averageRating,
           reviewsCount: 0,
           city: service.location_city,
           lat: service.lat,
