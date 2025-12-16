@@ -66,7 +66,24 @@ export class CreateRatingUseCase {
           }
         });
 
-        if (dto.bookingId) {
+        // Solo actualizar los acumuladores del Service si es el cliente quien califica y hay booking
+        if (dto.bookingId && dto.roleOfRater === 'client') {
+          const booking = await tx.bookService.findUnique({
+            where: { id: dto.bookingId },
+            select: { service_id: true }
+          });
+
+          if (booking?.service_id) {
+            await tx.service.update({
+              where: { id: booking.service_id },
+              data: {
+                total_rating_sum: { increment: dto.score },
+                rating_count: { increment: 1 }
+              }
+            });
+          }
+
+          // Marcar el booking como rated solo si es el cliente
           await tx.bookService.update({
             where: { id: dto.bookingId },
             data: { status: BookServiceStatus.rated }

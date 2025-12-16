@@ -6,7 +6,6 @@ export class GetRatingsByServiceUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(serviceId: string) {
-    console.log(serviceId);
     try {
       const ratings = await this.prisma.rating.findMany({
         where: {
