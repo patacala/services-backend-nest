@@ -39,7 +39,11 @@ export class LoginUseCase {
           },
         });
       } else {
-        isNewUser = false;
+        // Verificar si tiene perfil
+        const profile = await this.prisma.profile.findUnique({
+          where: { user_id: user.id },
+        });
+        isNewUser = !profile; // Si no tiene perfil, es nuevo usuario
       }
 
       // Crear payload del JWT, vence en 7 dias

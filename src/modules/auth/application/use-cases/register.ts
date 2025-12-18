@@ -46,7 +46,7 @@ export class RegisterUserUseCase {
     // Usar transacción para asegurar atomicidad
     try {
       await this.prisma.$transaction(async (tx) => {
-        // 1. Crear el perfil
+        // Crear el perfil
         const profile = await tx.profile.create({
           data: {
             user_id: userId,
@@ -63,7 +63,7 @@ export class RegisterUserUseCase {
           },
         });
 
-        // 2. Crear relaciones con categorías si existen
+        // Crear relaciones con categorías si existen
         if (selectedCategories && selectedCategories.length > 0) {
           const userCategories = selectedCategories.map((categoryId) => ({
             userId,
